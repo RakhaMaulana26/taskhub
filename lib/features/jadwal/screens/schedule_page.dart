@@ -28,7 +28,7 @@ class _SchedulePageState extends State<SchedulePage> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentPage);
-    _monthPageController = PageController(initialPage: 0);
+    _monthPageController = PageController(initialPage: 1000); // perbaiki initialPage ke 1000
     _currentMonthPage = 0;
     _currentWeekStart = _getStartOfWeek(DateTime.now());
     _selectedIndex = _getTodayIndexInWeek(_currentWeekStart);
@@ -113,10 +113,22 @@ class _SchedulePageState extends State<SchedulePage> {
     });
   }
 
-  // Hapus indikator bulan/tahun di dalam _buildMonthlyCalendar
-  Widget _buildMonthlyCalendar(DateTime referenceDate) {
-    int initialMonthPage = 1000;
+  // Ubah: _buildMonthlyCalendar hanya tampilkan satu bulan, tanpa PageView
+  Widget _buildMonthlyCalendar(DateTime monthDate) {
+    final firstDayOfMonth = DateTime(monthDate.year, monthDate.month, 1);
+    final lastDayOfMonth = DateTime(monthDate.year, monthDate.month + 1, 0);
+    final firstDayOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday - 1));
+    final lastDayOfGrid = lastDayOfMonth.add(Duration(days: 7 - lastDayOfMonth.weekday));
+    final days = <DateTime>[];
+    for (DateTime d = firstDayOfGrid; !d.isAfter(lastDayOfGrid); d = d.add(Duration(days: 1))) {
+      days.add(d);
+    }
+    final int rowCount = (days.length / 7).ceil();
+    final double rowHeight = 6.5.h;
+    final double headerHeight = 5.h;
+    final double totalHeight = headerHeight + rowCount * rowHeight;
     return Container(
+      height: totalHeight,
       decoration: BoxDecoration(
         color: AppColors.widget,
         borderRadius: BorderRadius.circular(3.w),
@@ -124,111 +136,83 @@ class _SchedulePageState extends State<SchedulePage> {
       padding: EdgeInsets.symmetric(vertical: 2.w, horizontal: 2.w),
       child: Column(
         children: [
-          // Indikator bulan/tahun DIHAPUS agar hanya pakai yang di Row utama
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (i) {
               final weekdaySymbols = DateFormat('E', 'id_ID').dateSymbols.STANDALONEWEEKDAYS;
               final weekday = weekdaySymbols[i == 6 ? 0 : i + 1];
+              // 0: Minggu, 6: Sabtu (di Flutter weekday: 6=Sabtu, 7=Minggu)
+              final isWeekend = (i == 5 || i == 6); // Sabtu/Minggu
               return Expanded(
                 child: Center(
                   child: Text(
-                    weekday.substring(0, 3), // Ubah ke 3 huruf
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 10.sp),
+                    weekday.substring(0, 3),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 10.sp,
+                      color: isWeekend ? Colors.red : AppColors.textPrimary,
+                    ),
                   ),
                 ),
               );
             }),
           ),
           SizedBox(height: 1.h),
-          SizedBox(
-            height: 32.h,
-            child: PageView.builder(
-              controller: _monthPageController,
-              onPageChanged: (pageIdx) {
-                setState(() {
-                  _currentMonthPage = pageIdx - initialMonthPage;
-                  final monthDate = DateTime(
-                    _monthPageReference.year + ((pageIdx - initialMonthPage + _monthPageReference.month - 1) ~/ 12),
-                    ((_monthPageReference.month + (pageIdx - initialMonthPage) - 1) % 12) + 1,
-                    1,
-                  );
-                  if (_selectedMonthlyDay != null) {
-                    if (_selectedMonthlyDay!.month != monthDate.month || _selectedMonthlyDay!.year != monthDate.year) {
-                      _selectedMonthlyDay = null;
-                      _selectedIndex = null;
-                    } else {
-                      int lastDay = DateTime(monthDate.year, monthDate.month + 1, 0).day;
-                      int day = _selectedMonthlyDay!.day <= lastDay ? _selectedMonthlyDay!.day : lastDay;
-                      _selectedMonthlyDay = DateTime(monthDate.year, monthDate.month, day);
-                      _selectedIndex = _selectedMonthlyDay!.weekday - 1;
-                    }
-                  }
-                });
-              },
-              itemBuilder: (context, pageIdx) {
-                final monthDate = DateTime(
-                  _monthPageReference.year + ((pageIdx - initialMonthPage + _monthPageReference.month - 1) ~/ 12),
-                  ((_monthPageReference.month + (pageIdx - initialMonthPage) - 1) % 12) + 1,
-                  1,
-                );
-                final firstDayOfMonth = DateTime(monthDate.year, monthDate.month, 1);
-                final lastDayOfMonth = DateTime(monthDate.year, monthDate.month + 1, 0);
-                final firstDayOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday - 1));
-                final lastDayOfGrid = lastDayOfMonth.add(Duration(days: 7 - lastDayOfMonth.weekday));
-                final days = <DateTime>[];
-                for (DateTime d = firstDayOfGrid; !d.isAfter(lastDayOfGrid); d = d.add(Duration(days: 1))) {
-                  days.add(d);
+          Expanded(
+            child: GridView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: 1.2,
+              ),
+              itemCount: days.length,
+              itemBuilder: (context, index) {
+                final date = days[index];
+                final isToday = DateUtils.isSameDay(date, DateTime.now());
+                final isCurrentMonth = date.month == monthDate.month && date.year == monthDate.year;
+                final isSelected = isCurrentMonth && _selectedMonthlyDay != null && DateUtils.isSameDay(date, _selectedMonthlyDay);
+                final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+                Color textColor;
+                if (!isCurrentMonth) {
+                  textColor = AppColors.textPrimary.withOpacity(0.3); // abu-abu
+                } else if (isWeekend) {
+                  textColor = Colors.red;
+                } else {
+                  textColor = isSelected ? Colors.white : AppColors.textPrimary;
                 }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 7,
-                    childAspectRatio: 1.2,
-                  ),
-                  itemCount: days.length,
-                  itemBuilder: (context, index) {
-                    final date = days[index];
-                    final isToday = DateUtils.isSameDay(date, DateTime.now());
-                    final isCurrentMonth = date.month == monthDate.month && date.year == monthDate.year;
-                    final isSelected = isCurrentMonth && _selectedMonthlyDay != null && DateUtils.isSameDay(date, _selectedMonthlyDay);
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedMonthlyDay = date;
-                          _selectedIndex = date.weekday - 1;
-                          // Jangan ubah _currentWeekStart di sini agar anchor scroll tetap stabil
-                        });
-                      },
-                      child: Container(
-                        margin: EdgeInsets.all(0.5.w),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? AppColors.primary
-                              : isToday
-                                  ? AppColors.primary.withOpacity(0.2)
-                                  : Colors.transparent,
-                          borderRadius: BorderRadius.circular(2.w),
-                          border: isToday
-                              ? Border.all(color: AppColors.primary, width: 1)
-                              : null,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '${date.day}',
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : (isCurrentMonth ? AppColors.textPrimary : AppColors.textPrimary.withOpacity(0.3)),
-                              fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                              fontSize: 11.sp,
-                            ),
-                          ),
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _selectedMonthlyDay = date;
+                      _selectedIndex = date.weekday - 1;
+                    });
+                  },
+                  child: Container(
+                    margin: EdgeInsets.all(0.5.w),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary
+                          : isToday
+                              ? AppColors.primary.withOpacity(0.2)
+                              : Colors.transparent,
+                      borderRadius: BorderRadius.circular(2.w),
+                      border: isToday
+                          ? Border.all(color: AppColors.primary, width: 1)
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          color: textColor,
+                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 11.sp,
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 );
               },
             ),
@@ -377,15 +361,45 @@ class _SchedulePageState extends State<SchedulePage> {
               firstCurve: Curves.easeInOut,
               secondCurve: Curves.easeInOut,
               sizeCurve: Curves.easeInOut,
-              firstChild: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, -0.3),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: ModalRoute.of(context)!.animation!,
-                  curve: Curves.easeInOut,
-                )),
-                child: _buildMonthlyCalendar(_currentWeekStart),
+              // Ubah: firstChild menjadi PageView untuk bulan, dibungkus SizedBox tinggi maksimal
+              firstChild: SizedBox(
+                height: 36.h,
+                child: PageView.builder(
+                  controller: _monthPageController,
+                  onPageChanged: (pageIdx) {
+                    setState(() {
+                      _currentMonthPage = pageIdx - 1000; // offset dari initialPage
+                      final monthDate = DateTime(
+                        _monthPageReference.year + (((pageIdx - 1000) + _monthPageReference.month - 1) ~/ 12),
+                        ((_monthPageReference.month + (pageIdx - 1000) - 1) % 12) + 1,
+                        1,
+                      );
+                      if (_selectedMonthlyDay != null) {
+                        if (_selectedMonthlyDay!.month != monthDate.month || _selectedMonthlyDay!.year != monthDate.year) {
+                          _selectedMonthlyDay = null;
+                          _selectedIndex = null;
+                        } else {
+                          int lastDay = DateTime(monthDate.year, monthDate.month + 1, 0).day;
+                          int day = _selectedMonthlyDay!.day <= lastDay ? _selectedMonthlyDay!.day : lastDay;
+                          _selectedMonthlyDay = DateTime(monthDate.year, monthDate.month, day);
+                          _selectedIndex = _selectedMonthlyDay!.weekday - 1;
+                        }
+                      }
+                    });
+                  },
+                  itemBuilder: (context, pageIdx) {
+                    final monthOffset = pageIdx - 1000;
+                    final monthDate = DateTime(
+                      _monthPageReference.year + ((monthOffset + _monthPageReference.month - 1) ~/ 12),
+                      ((_monthPageReference.month + monthOffset - 1) % 12) + 1,
+                      1,
+                    );
+                    return Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
+                      child: _buildMonthlyCalendar(monthDate),
+                    );
+                  },
+                ),
               ),
               secondChild: SizedBox(
                 height: 7.5.h,
@@ -399,7 +413,7 @@ class _SchedulePageState extends State<SchedulePage> {
                       ).add(Duration(days: 7 * (page - 1000)));
                       _selectedIndex = _getTodayIndexInWeek(
                         _currentWeekStart,
-                      ); // update: default ke hari ini jika ada
+                      );
                     });
                   },
                   itemBuilder: (context, pageIndex) {
