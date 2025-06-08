@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sizer/sizer.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:taskhub/features/navbar/bottom_navbar.dart';
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -23,6 +24,7 @@ class _SchedulePageState extends State<SchedulePage> {
   bool _showMonthlyCalendar = false;
   DateTime? _selectedMonthlyDay;
   final DateTime _monthPageReference = DateTime(2000, 1, 1); // anchor untuk PageView bulanan
+  int _navbarIndex = 1; // Jadwal sebagai default
 
   @override
   void initState() {
@@ -136,84 +138,17 @@ class _SchedulePageState extends State<SchedulePage> {
       padding: EdgeInsets.symmetric(vertical: 2.w, horizontal: 2.w),
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(7, (i) {
-              final weekdaySymbols = DateFormat('E', 'id_ID').dateSymbols.STANDALONEWEEKDAYS;
-              final weekday = weekdaySymbols[i == 6 ? 0 : i + 1];
-              // 0: Minggu, 6: Sabtu (di Flutter weekday: 6=Sabtu, 7=Minggu)
-              final isWeekend = (i == 5 || i == 6); // Sabtu/Minggu
-              return Expanded(
-                child: Center(
-                  child: Text(
-                    weekday.substring(0, 3),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 10.sp,
-                      color: isWeekend ? Colors.red : AppColors.textPrimary,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
+          const MonthlyCalendarHeader(),
           SizedBox(height: 1.h),
           Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.zero,
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                childAspectRatio: 1.2,
-              ),
-              itemCount: days.length,
-              itemBuilder: (context, index) {
-                final date = days[index];
-                final isToday = DateUtils.isSameDay(date, DateTime.now());
-                final isCurrentMonth = date.month == monthDate.month && date.year == monthDate.year;
-                final isSelected = isCurrentMonth && _selectedMonthlyDay != null && DateUtils.isSameDay(date, _selectedMonthlyDay);
-                final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-                Color textColor;
-                if (!isCurrentMonth) {
-                  textColor = AppColors.textPrimary.withOpacity(0.3); // abu-abu
-                } else if (isWeekend) {
-                  textColor = Colors.red;
-                } else {
-                  textColor = isSelected ? Colors.white : AppColors.textPrimary;
-                }
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedMonthlyDay = date;
-                      _selectedIndex = date.weekday - 1;
-                    });
-                  },
-                  child: Container(
-                    margin: EdgeInsets.all(0.5.w),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : isToday
-                              ? AppColors.primary.withOpacity(0.2)
-                              : Colors.transparent,
-                      borderRadius: BorderRadius.circular(2.w),
-                      border: isToday
-                          ? Border.all(color: AppColors.primary, width: 1)
-                          : null,
-                    ),
-                    child: Center(
-                      child: Text(
-                        '${date.day}',
-                        style: TextStyle(
-                          color: textColor,
-                          fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 11.sp,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
+            child: MonthlyCalendarGrid(
+              monthDate: monthDate,
+              selectedDay: _selectedMonthlyDay,
+              onDayTap: (date) {
+                setState(() {
+                  _selectedMonthlyDay = date;
+                  _selectedIndex = date.weekday - 1;
+                });
               },
             ),
           ),
@@ -232,6 +167,7 @@ class _SchedulePageState extends State<SchedulePage> {
     ).format(now);
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
@@ -240,33 +176,30 @@ class _SchedulePageState extends State<SchedulePage> {
         titleSpacing: 0,
         title: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: 5.w, // Contoh: 5% dari lebar layar
+            horizontal: 5.w,
           ).copyWith(
-            top:
-                3.h, // Contoh: 3% dari tinggi layar (untuk penyesuaian vertikal)
+            top: 3.h,
             bottom: 1.h,
           ),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .center, // Pusatkan konten kolom di area yang tersedia
+              mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
                   'Jadwal',
                   style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 22.sp, // Contoh: font size responsif
+                    fontSize: 22.sp,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 0.5.h), // Contoh: 0.5% dari tinggi layar
+                SizedBox(height: 0.5.h),
                 Text(
                   formattedDate,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
-                    fontSize: 12.sp, // Contoh: font size responsif
+                    fontSize: 12.sp,
                   ),
                 ),
               ],
@@ -275,7 +208,12 @@ class _SchedulePageState extends State<SchedulePage> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(2.w),
+        padding: EdgeInsets.only(
+          left: 2.w,
+          right: 2.w,
+          top: 2.w,
+          bottom: 14.h, // beri padding bawah agar tidak tertutup navbar
+        ),
         child: Column(
           children: [
             SizedBox(height: 2.h),
@@ -361,7 +299,6 @@ class _SchedulePageState extends State<SchedulePage> {
               firstCurve: Curves.easeInOut,
               secondCurve: Curves.easeInOut,
               sizeCurve: Curves.easeInOut,
-              // Ubah: firstChild menjadi PageView untuk bulan, dibungkus SizedBox tinggi maksimal
               firstChild: SizedBox(
                 height: 36.h,
                 child: PageView.builder(
@@ -522,6 +459,130 @@ class _SchedulePageState extends State<SchedulePage> {
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: BottomNavBar(
+          currentIndex: 1,
+          onTap: (idx) {
+            setState(() {
+              _navbarIndex = idx;
+              // TODO: Navigasi ke halaman lain jika perlu
+            });
+          },
+          onCenterButtonTap: () {
+            // TODO: Aksi untuk tombol lingkaran tengah
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// Widget untuk header hari pada kalender bulanan
+class MonthlyCalendarHeader extends StatelessWidget {
+  const MonthlyCalendarHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(7, (i) {
+        final weekdaySymbols = DateFormat('E', 'id_ID').dateSymbols.STANDALONEWEEKDAYS;
+        final weekday = weekdaySymbols[i == 6 ? 0 : i + 1];
+        final isWeekend = (i == 5 || i == 6); // Sabtu/Minggu
+        return Expanded(
+          child: Center(
+            child: Text(
+              weekday.substring(0, 3),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 10.sp,
+                color: isWeekend ? Colors.red : AppColors.textPrimary,
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+// Widget untuk grid tanggal pada kalender bulanan
+class MonthlyCalendarGrid extends StatelessWidget {
+  final DateTime monthDate;
+  final DateTime? selectedDay;
+  final void Function(DateTime) onDayTap;
+
+  const MonthlyCalendarGrid({
+    super.key,
+    required this.monthDate,
+    required this.selectedDay,
+    required this.onDayTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final firstDayOfMonth = DateTime(monthDate.year, monthDate.month, 1);
+    final lastDayOfMonth = DateTime(monthDate.year, monthDate.month + 1, 0);
+    final firstDayOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday - 1));
+    final lastDayOfGrid = lastDayOfMonth.add(Duration(days: 7 - lastDayOfMonth.weekday));
+    final days = <DateTime>[];
+    for (DateTime d = firstDayOfGrid; !d.isAfter(lastDayOfGrid); d = d.add(Duration(days: 1))) {
+      days.add(d);
+    }
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(),
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        childAspectRatio: 1.2,
+      ),
+      itemCount: days.length,
+      itemBuilder: (context, index) {
+        final date = days[index];
+        final isToday = DateUtils.isSameDay(date, DateTime.now());
+        final isCurrentMonth = date.month == monthDate.month && date.year == monthDate.year;
+        final isSelected = isCurrentMonth && selectedDay != null && DateUtils.isSameDay(date, selectedDay);
+        final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+        Color textColor;
+        if (!isCurrentMonth) {
+          textColor = AppColors.textPrimary.withOpacity(0.3);
+        } else if (isSelected) {
+          textColor = Colors.white;
+        } else if (isWeekend) {
+          textColor = Colors.red;
+        } else {
+          textColor = AppColors.textPrimary;
+        }
+        return GestureDetector(
+          onTap: () => onDayTap(date),
+          child: Container(
+            margin: EdgeInsets.all(0.5.w),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? AppColors.primary
+                  : isToday
+                      ? AppColors.primary.withOpacity(0.2)
+                      : Colors.transparent,
+              borderRadius: BorderRadius.circular(2.w),
+              border: isToday
+                  ? Border.all(color: AppColors.primary, width: 1)
+                  : null,
+            ),
+            child: Center(
+              child: Text(
+                '${date.day}',
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 11.sp,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
