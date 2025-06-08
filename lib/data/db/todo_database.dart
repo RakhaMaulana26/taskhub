@@ -47,6 +47,17 @@ class TodoDatabase {
         FOREIGN KEY (todoId) REFERENCES todos(id) ON DELETE CASCADE
       )
     ''');
+
+    // Buat tabel subtasks
+    await db.execute('''
+      CREATE TABLE subtasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        todoId INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        isDone INTEGER NOT NULL,
+        FOREIGN KEY (todoId) REFERENCES todos(id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   // CRUD Todo
