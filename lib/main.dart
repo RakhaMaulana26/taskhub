@@ -7,23 +7,42 @@ import 'package:sizer/sizer.dart';
 import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
 import 'package:taskhub/config/theme/app_theme.dart'; // Pastikan path ini benar
 import 'package:flutter/services.dart';
-import 'screens/home_screen.dart';
+import 'features/home/screens/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
   runApp(const MainApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MainApp extends StatelessWidget {
+  const MainApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return Sizer(
+      builder: (context, orientation, deviceType) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: appLightTheme,
+          darkTheme: appDarkTheme,
+          themeMode: ThemeMode.light,
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('id', 'ID'),
+            Locale('en', 'US'),
+          ],
+          home: const HomeScreen(),
+        );
+      },
     );
   }
 }

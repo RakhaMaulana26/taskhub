@@ -4,6 +4,8 @@ import '../widgets/period_filter.dart';
 import '../models/task_period.dart';
 import '../models/task_status.dart';
 import 'detail_statistics_screen.dart';
+import 'package:taskhub/features/navbar/bottom_navbar.dart';
+import 'package:taskhub/config/theme/app_theme.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -36,27 +38,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        title: const Text('Statistik'),
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  const Icon(Icons.arrow_back),
-                  const SizedBox(width: 16),
-                  const Text(
-                    'Statistik',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: PeriodFilterWidget(
@@ -74,25 +67,41 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 itemCount: _periods.length,
                 itemBuilder: (context, index) {
                   final period = _periods[index];
-                  return _buildPeriodStatistics(context, period);
+                  return _buildPeriodStatistics(context, period, theme);
                 },
               ),
             ),
           ],
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: BottomNavBar(
+          currentIndex: 3,
+          onTap: (idx) {
+            navigateToNavBarPage(context, idx);
+          },
+          onCenterButtonTap: () {
+            // TODO: Aksi untuk tombol lingkaran tengah
+          },
+        ),
+      ),
     );
   }
 
-  Widget _buildPeriodStatistics(BuildContext context, TaskPeriod period) {
-    final dateFormat = "${period.startDate.day} ${_getMonthName(period.startDate.month)} - ${period.endDate.day} ${_getMonthName(period.endDate.month)} ${period.endDate.year}";
-    
+  Widget _buildPeriodStatistics(
+    BuildContext context,
+    TaskPeriod period,
+    ThemeData theme,
+  ) {
+    final dateFormat =
+        "${period.startDate.day} ${_getMonthName(period.startDate.month)} - ${period.endDate.day} ${_getMonthName(period.endDate.month)} ${period.endDate.year}";
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.only(top: 12, right: 16, left: 16, bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: AppColors.widget,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -113,14 +122,15 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DetailStatisticsScreen(period: period),
+                        builder:
+                            (context) => DetailStatisticsScreen(period: period),
                       ),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'Details',
                     style: TextStyle(
-                      color: Colors.blue,
+                      color: theme.colorScheme.primary,
                       fontSize: 14,
                     ),
                   ),
@@ -131,7 +141,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               dateFormat,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey[400],
+                color: theme.colorScheme.onSurface.withOpacity(0.5),
               ),
             ),
             const SizedBox(height: 16),
@@ -155,7 +165,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                       _buildStatusIndicator(
                         '${period.onTimePercentage}%',
                         'Diselesaikan tepat waktu',
-                        Colors.blue,
+                        AppColors.primary,
                       ),
                       const SizedBox(height: 8),
                       _buildStatusIndicator(
@@ -188,10 +198,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           width: 10,
           height: 10,
           margin: const EdgeInsets.only(top: 5),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: 8),
         Column(
@@ -199,17 +206,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           children: [
             Text(
               percentage,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[400],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
             ),
           ],
         ),
@@ -219,8 +220,18 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-      'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
     ];
     return months[month - 1];
   }

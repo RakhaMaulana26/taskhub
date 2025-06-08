@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/task_period.dart';
 import '../models/task.dart';
 import '../models/task_status.dart';
+import 'package:taskhub/config/theme/app_theme.dart';
 
 class DetailStatisticsScreen extends StatefulWidget {
   final TaskPeriod period;
@@ -75,9 +76,9 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.arrow_back),
+                    child: const Icon(Icons.arrow_back, color: Color(0xFFFFFFFF),),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 32),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -124,8 +125,8 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          color: AppColors.widget,
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -166,11 +167,11 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
     switch (status) {
       case TaskStatus.completed:
         text = 'Selesai';
-        backgroundColor = Colors.blue;
+        backgroundColor = AppColors.primary;
         break;
       case TaskStatus.completedLate:
         text = 'Selesai Terlambat';
-        backgroundColor = Colors.blue;
+        backgroundColor = AppColors.primary;
         break;
       case TaskStatus.notCompleted:
         text = 'Belum Selesai';

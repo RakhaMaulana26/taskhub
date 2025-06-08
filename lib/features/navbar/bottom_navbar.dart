@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:sizer/sizer.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
+import 'package:taskhub/features/home/screens/home_screen.dart';
+import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
+import 'package:taskhub/features/statistik/screens/statistics_screen.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -25,7 +28,7 @@ class BottomNavBar extends StatelessWidget {
         Container(
           height: 9.h,
           margin: EdgeInsets.only(top: 7.w), // beri ruang di atas agar tombol plus tidak terpotong
-          padding: EdgeInsets.only(bottom: 1.h), // tambah padding bawah
+          padding: EdgeInsets.only(bottom: 0.h), // tambah padding bawah
           decoration: BoxDecoration(
             color: AppColors.widget, // background widget
           ),
@@ -35,7 +38,7 @@ class BottomNavBar extends StatelessWidget {
               Expanded(
                 child: _NavBarItem(
                   svgAsset: 'assets/icons/home-simple.svg',
-                  label: 'Home',
+                  label: 'Beranda',
                   selected: currentIndex == 0,
                   onTap: () => onTap(0),
                 ),
@@ -98,8 +101,8 @@ class BottomNavBar extends StatelessWidget {
 Widget _buildSvgIcon(String assetPath, Color color) {
   return SvgPicture.asset(
     assetPath,
-    height: 7.w,
-    width: 7.w,
+    height: 6.w,
+    width: 6.w,
     colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
   );
 }
@@ -139,6 +142,25 @@ class _NavBarItem extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+void navigateToNavBarPage(BuildContext context, int idx) {
+  if (idx == 0) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const HomeScreen()),
+    );
+  } else if (idx == 1) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const SchedulePage()),
+    );
+  } else if (idx == 3) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const StatisticsScreen()),
     );
   }
 }

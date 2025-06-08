@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskhub/config/theme/app_theme.dart';
 
 enum PeriodFilter {
   thisWeek,
@@ -53,17 +54,19 @@ class PeriodFilterWidget extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: isSelected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey,
+            color: AppColors.primary,
+            width: 2,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.white : Colors.grey,
+            color: isSelected ? Colors.white : AppColors.primary,
             fontSize: 12,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

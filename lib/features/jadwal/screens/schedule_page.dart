@@ -23,14 +23,20 @@ class _SchedulePageState extends State<SchedulePage> {
   int? _selectedIndex;
   bool _showMonthlyCalendar = false;
   DateTime? _selectedMonthlyDay;
-  final DateTime _monthPageReference = DateTime(2000, 1, 1); // anchor untuk PageView bulanan
+  final DateTime _monthPageReference = DateTime(
+    2000,
+    1,
+    1,
+  ); // anchor untuk PageView bulanan
   int _navbarIndex = 1; // Jadwal sebagai default
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _currentPage);
-    _monthPageController = PageController(initialPage: 1000); // perbaiki initialPage ke 1000
+    _monthPageController = PageController(
+      initialPage: 1000,
+    ); // perbaiki initialPage ke 1000
     _currentMonthPage = 0;
     _currentWeekStart = _getStartOfWeek(DateTime.now());
     _selectedIndex = _getTodayIndexInWeek(_currentWeekStart);
@@ -106,7 +112,9 @@ class _SchedulePageState extends State<SchedulePage> {
           baseDate = DateTime.now();
         }
         int initialMonthPage = 1000;
-        int monthDiff = (baseDate.year - _monthPageReference.year) * 12 + (baseDate.month - _monthPageReference.month);
+        int monthDiff =
+            (baseDate.year - _monthPageReference.year) * 12 +
+            (baseDate.month - _monthPageReference.month);
         _currentMonthPage = monthDiff;
         _monthPageController.jumpToPage(initialMonthPage + monthDiff);
         _selectedMonthlyDay = baseDate;
@@ -119,10 +127,18 @@ class _SchedulePageState extends State<SchedulePage> {
   Widget _buildMonthlyCalendar(DateTime monthDate) {
     final firstDayOfMonth = DateTime(monthDate.year, monthDate.month, 1);
     final lastDayOfMonth = DateTime(monthDate.year, monthDate.month + 1, 0);
-    final firstDayOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday - 1));
-    final lastDayOfGrid = lastDayOfMonth.add(Duration(days: 7 - lastDayOfMonth.weekday));
+    final firstDayOfGrid = firstDayOfMonth.subtract(
+      Duration(days: firstDayOfMonth.weekday - 1),
+    );
+    final lastDayOfGrid = lastDayOfMonth.add(
+      Duration(days: 7 - lastDayOfMonth.weekday),
+    );
     final days = <DateTime>[];
-    for (DateTime d = firstDayOfGrid; !d.isAfter(lastDayOfGrid); d = d.add(Duration(days: 1))) {
+    for (
+      DateTime d = firstDayOfGrid;
+      !d.isAfter(lastDayOfGrid);
+      d = d.add(Duration(days: 1))
+    ) {
       days.add(d);
     }
     final int rowCount = (days.length / 7).ceil();
@@ -171,38 +187,21 @@ class _SchedulePageState extends State<SchedulePage> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        automaticallyImplyLeading: false,
-        toolbarHeight: 10.h,
-        titleSpacing: 0,
-        title: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: 5.w,
-          ).copyWith(
-            top: 3.h,
-            bottom: 1.h,
-          ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Text(
-                  'Jadwal',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontSize: 22.sp,
-                    fontWeight: FontWeight.w600,
-                  ),
+        title: const Text('Jadwal'),
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(32),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 8, left: 16, right: 16),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                formattedDate,
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textPrimary,
                 ),
-                SizedBox(height: 0.5.h),
-                Text(
-                  formattedDate,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.textTheme.bodyMedium?.color?.withOpacity(0.8),
-                    fontSize: 12.sp,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
@@ -210,9 +209,7 @@ class _SchedulePageState extends State<SchedulePage> {
       body: SingleChildScrollView(
         padding: EdgeInsets.only(
           left: 2.w,
-          right: 2.w,
-          top: 2.w,
-          bottom: 14.h, // beri padding bawah agar tidak tertutup navbar
+          right: 2.w, // beri padding bawah agar tidak tertutup navbar
         ),
         child: Column(
           children: [
@@ -222,7 +219,10 @@ class _SchedulePageState extends State<SchedulePage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 GestureDetector(
-                  onTap: _showMonthlyCalendar ? _goToPreviousMonth : _goToPreviousWeek,
+                  onTap:
+                      _showMonthlyCalendar
+                          ? _goToPreviousMonth
+                          : _goToPreviousWeek,
                   child: Container(
                     width: 8.w,
                     height: 8.w,
@@ -243,27 +243,46 @@ class _SchedulePageState extends State<SchedulePage> {
                       child: Column(
                         children: [
                           Text(
-                            DateFormat(
-                              'MMMM',
-                              'id_ID',
-                            ).format(_showMonthlyCalendar
-                                ? DateTime(
-                                    _monthPageReference.year + ((_currentMonthPage + _monthPageReference.month - 1) ~/ 12),
-                                    ((_monthPageReference.month + _currentMonthPage - 1) % 12) + 1,
-                                    1)
-                                : _currentWeekStart),
+                            DateFormat('MMMM', 'id_ID').format(
+                              _showMonthlyCalendar
+                                  ? DateTime(
+                                    _monthPageReference.year +
+                                        ((_currentMonthPage +
+                                                _monthPageReference.month -
+                                                1) ~/
+                                            12),
+                                    ((_monthPageReference.month +
+                                                _currentMonthPage -
+                                                1) %
+                                            12) +
+                                        1,
+                                    1,
+                                  )
+                                  : _currentWeekStart,
+                            ),
                             style: TextStyle(
                               fontSize: 14.sp,
                               color: AppColors.textPrimary,
                             ),
                           ),
                           Text(
-                            DateFormat('yyyy').format(_showMonthlyCalendar
-                                ? DateTime(
-                                    _monthPageReference.year + ((_currentMonthPage + _monthPageReference.month - 1) ~/ 12),
-                                    ((_monthPageReference.month + _currentMonthPage - 1) % 12) + 1,
-                                    1)
-                                : _currentWeekStart),
+                            DateFormat('yyyy').format(
+                              _showMonthlyCalendar
+                                  ? DateTime(
+                                    _monthPageReference.year +
+                                        ((_currentMonthPage +
+                                                _monthPageReference.month -
+                                                1) ~/
+                                            12),
+                                    ((_monthPageReference.month +
+                                                _currentMonthPage -
+                                                1) %
+                                            12) +
+                                        1,
+                                    1,
+                                  )
+                                  : _currentWeekStart,
+                            ),
                             style: TextStyle(
                               fontSize: 12.sp,
                               color: AppColors.textPrimary,
@@ -293,9 +312,10 @@ class _SchedulePageState extends State<SchedulePage> {
             // Tampilkan hanya satu kalender: mingguan ATAU bulanan
             AnimatedCrossFade(
               duration: Duration(milliseconds: 400),
-              crossFadeState: _showMonthlyCalendar
-                  ? CrossFadeState.showFirst
-                  : CrossFadeState.showSecond,
+              crossFadeState:
+                  _showMonthlyCalendar
+                      ? CrossFadeState.showFirst
+                      : CrossFadeState.showSecond,
               firstCurve: Curves.easeInOut,
               secondCurve: Curves.easeInOut,
               sizeCurve: Curves.easeInOut,
@@ -305,20 +325,40 @@ class _SchedulePageState extends State<SchedulePage> {
                   controller: _monthPageController,
                   onPageChanged: (pageIdx) {
                     setState(() {
-                      _currentMonthPage = pageIdx - 1000; // offset dari initialPage
+                      _currentMonthPage =
+                          pageIdx - 1000; // offset dari initialPage
                       final monthDate = DateTime(
-                        _monthPageReference.year + (((pageIdx - 1000) + _monthPageReference.month - 1) ~/ 12),
-                        ((_monthPageReference.month + (pageIdx - 1000) - 1) % 12) + 1,
+                        _monthPageReference.year +
+                            (((pageIdx - 1000) +
+                                    _monthPageReference.month -
+                                    1) ~/
+                                12),
+                        ((_monthPageReference.month + (pageIdx - 1000) - 1) %
+                                12) +
+                            1,
                         1,
                       );
                       if (_selectedMonthlyDay != null) {
-                        if (_selectedMonthlyDay!.month != monthDate.month || _selectedMonthlyDay!.year != monthDate.year) {
+                        if (_selectedMonthlyDay!.month != monthDate.month ||
+                            _selectedMonthlyDay!.year != monthDate.year) {
                           _selectedMonthlyDay = null;
                           _selectedIndex = null;
                         } else {
-                          int lastDay = DateTime(monthDate.year, monthDate.month + 1, 0).day;
-                          int day = _selectedMonthlyDay!.day <= lastDay ? _selectedMonthlyDay!.day : lastDay;
-                          _selectedMonthlyDay = DateTime(monthDate.year, monthDate.month, day);
+                          int lastDay =
+                              DateTime(
+                                monthDate.year,
+                                monthDate.month + 1,
+                                0,
+                              ).day;
+                          int day =
+                              _selectedMonthlyDay!.day <= lastDay
+                                  ? _selectedMonthlyDay!.day
+                                  : lastDay;
+                          _selectedMonthlyDay = DateTime(
+                            monthDate.year,
+                            monthDate.month,
+                            day,
+                          );
                           _selectedIndex = _selectedMonthlyDay!.weekday - 1;
                         }
                       }
@@ -327,12 +367,16 @@ class _SchedulePageState extends State<SchedulePage> {
                   itemBuilder: (context, pageIdx) {
                     final monthOffset = pageIdx - 1000;
                     final monthDate = DateTime(
-                      _monthPageReference.year + ((monthOffset + _monthPageReference.month - 1) ~/ 12),
+                      _monthPageReference.year +
+                          ((monthOffset + _monthPageReference.month - 1) ~/ 12),
                       ((_monthPageReference.month + monthOffset - 1) % 12) + 1,
                       1,
                     );
                     return Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 1.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 2.w,
+                        vertical: 1.h,
+                      ),
                       child: _buildMonthlyCalendar(monthDate),
                     );
                   },
@@ -348,9 +392,7 @@ class _SchedulePageState extends State<SchedulePage> {
                       _currentWeekStart = _getStartOfWeek(
                         DateTime.now(),
                       ).add(Duration(days: 7 * (page - 1000)));
-                      _selectedIndex = _getTodayIndexInWeek(
-                        _currentWeekStart,
-                      );
+                      _selectedIndex = _getTodayIndexInWeek(_currentWeekStart);
                     });
                   },
                   itemBuilder: (context, pageIndex) {
@@ -362,9 +404,16 @@ class _SchedulePageState extends State<SchedulePage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: List.generate(weekDates.length, (index) {
                         final date = weekDates[index];
-                        final isToday = DateUtils.isSameDay(date, DateTime.now());
-                        final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
-                        final isSelected = _selectedIndex == index && _currentPage == pageIndex;
+                        final isToday = DateUtils.isSameDay(
+                          date,
+                          DateTime.now(),
+                        );
+                        final isWeekend =
+                            date.weekday == DateTime.saturday ||
+                            date.weekday == DateTime.sunday;
+                        final isSelected =
+                            _selectedIndex == index &&
+                            _currentPage == pageIndex;
                         return Flexible(
                           child: GestureDetector(
                             onTap: () {
@@ -378,17 +427,27 @@ class _SchedulePageState extends State<SchedulePage> {
                                 margin: EdgeInsets.symmetric(horizontal: 1.w),
                                 padding: EdgeInsets.symmetric(vertical: 0.75.h),
                                 decoration: BoxDecoration(
-                                  color: isSelected
-                                      ? AppColors.primary
-                                      : (isToday
-                                          ? AppColors.primary.withOpacity(0.15)
-                                          : AppColors.widget),
+                                  color:
+                                      isSelected
+                                          ? AppColors.primary
+                                          : (isToday
+                                              ? AppColors.primary.withOpacity(
+                                                0.15,
+                                              )
+                                              : AppColors.widget),
                                   borderRadius: BorderRadius.circular(3.w),
-                                  border: isToday
-                                      ? Border.all(color: AppColors.primary, width: 1)
-                                      : (isSelected
-                                          ? Border.all(color: AppColors.primary, width: 1)
-                                          : null),
+                                  border:
+                                      isToday
+                                          ? Border.all(
+                                            color: AppColors.primary,
+                                            width: 1,
+                                          )
+                                          : (isSelected
+                                              ? Border.all(
+                                                color: AppColors.primary,
+                                                width: 1,
+                                              )
+                                              : null),
                                 ),
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -397,13 +456,15 @@ class _SchedulePageState extends State<SchedulePage> {
                                     Text(
                                       DateFormat('E', 'id_ID').format(date),
                                       style: TextStyle(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : (isWeekend
-                                                ? Colors.red
-                                                : (isToday
-                                                    ? AppColors.primary
-                                                    : AppColors.textPrimary)),
+                                        color:
+                                            isSelected
+                                                ? Colors.white
+                                                : (isWeekend
+                                                    ? Colors.red
+                                                    : (isToday
+                                                        ? AppColors.primary
+                                                        : AppColors
+                                                            .textPrimary)),
                                         fontWeight: FontWeight.bold,
                                         fontSize: 10.sp,
                                       ),
@@ -412,13 +473,15 @@ class _SchedulePageState extends State<SchedulePage> {
                                     Text(
                                       date.day.toString(),
                                       style: TextStyle(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : (isWeekend
-                                                ? Colors.red
-                                                : (isToday
-                                                    ? AppColors.primary
-                                                    : AppColors.textPrimary)),
+                                        color:
+                                            isSelected
+                                                ? Colors.white
+                                                : (isWeekend
+                                                    ? Colors.red
+                                                    : (isToday
+                                                        ? AppColors.primary
+                                                        : AppColors
+                                                            .textPrimary)),
                                         fontSize: 14.sp,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -464,10 +527,7 @@ class _SchedulePageState extends State<SchedulePage> {
         child: BottomNavBar(
           currentIndex: 1,
           onTap: (idx) {
-            setState(() {
-              _navbarIndex = idx;
-              // TODO: Navigasi ke halaman lain jika perlu
-            });
+            navigateToNavBarPage(context, idx);
           },
           onCenterButtonTap: () {
             // TODO: Aksi untuk tombol lingkaran tengah
@@ -487,7 +547,8 @@ class MonthlyCalendarHeader extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(7, (i) {
-        final weekdaySymbols = DateFormat('E', 'id_ID').dateSymbols.STANDALONEWEEKDAYS;
+        final weekdaySymbols =
+            DateFormat('E', 'id_ID').dateSymbols.STANDALONEWEEKDAYS;
         final weekday = weekdaySymbols[i == 6 ? 0 : i + 1];
         final isWeekend = (i == 5 || i == 6); // Sabtu/Minggu
         return Expanded(
@@ -524,10 +585,18 @@ class MonthlyCalendarGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final firstDayOfMonth = DateTime(monthDate.year, monthDate.month, 1);
     final lastDayOfMonth = DateTime(monthDate.year, monthDate.month + 1, 0);
-    final firstDayOfGrid = firstDayOfMonth.subtract(Duration(days: firstDayOfMonth.weekday - 1));
-    final lastDayOfGrid = lastDayOfMonth.add(Duration(days: 7 - lastDayOfMonth.weekday));
+    final firstDayOfGrid = firstDayOfMonth.subtract(
+      Duration(days: firstDayOfMonth.weekday - 1),
+    );
+    final lastDayOfGrid = lastDayOfMonth.add(
+      Duration(days: 7 - lastDayOfMonth.weekday),
+    );
     final days = <DateTime>[];
-    for (DateTime d = firstDayOfGrid; !d.isAfter(lastDayOfGrid); d = d.add(Duration(days: 1))) {
+    for (
+      DateTime d = firstDayOfGrid;
+      !d.isAfter(lastDayOfGrid);
+      d = d.add(Duration(days: 1))
+    ) {
       days.add(d);
     }
     return GridView.builder(
@@ -542,9 +611,15 @@ class MonthlyCalendarGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final date = days[index];
         final isToday = DateUtils.isSameDay(date, DateTime.now());
-        final isCurrentMonth = date.month == monthDate.month && date.year == monthDate.year;
-        final isSelected = isCurrentMonth && selectedDay != null && DateUtils.isSameDay(date, selectedDay);
-        final isWeekend = date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+        final isCurrentMonth =
+            date.month == monthDate.month && date.year == monthDate.year;
+        final isSelected =
+            isCurrentMonth &&
+            selectedDay != null &&
+            DateUtils.isSameDay(date, selectedDay);
+        final isWeekend =
+            date.weekday == DateTime.saturday ||
+            date.weekday == DateTime.sunday;
         Color textColor;
         if (!isCurrentMonth) {
           textColor = AppColors.textPrimary.withOpacity(0.3);
@@ -560,15 +635,17 @@ class MonthlyCalendarGrid extends StatelessWidget {
           child: Container(
             margin: EdgeInsets.all(0.5.w),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? AppColors.primary
-                  : isToday
+              color:
+                  isSelected
+                      ? AppColors.primary
+                      : isToday
                       ? AppColors.primary.withOpacity(0.2)
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(2.w),
-              border: isToday
-                  ? Border.all(color: AppColors.primary, width: 1)
-                  : null,
+              border:
+                  isToday
+                      ? Border.all(color: AppColors.primary, width: 1)
+                      : null,
             ),
             child: Center(
               child: Text(

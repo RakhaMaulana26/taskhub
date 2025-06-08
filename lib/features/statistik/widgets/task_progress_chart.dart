@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:taskhub/config/theme/app_theme.dart';
 
 class TaskProgressChart extends StatelessWidget {
   final int onTimePercentage;
@@ -42,7 +43,7 @@ class TaskProgressChart extends StatelessWidget {
               'Tugas',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey,
+                color: Colors.white,
               ),
             ),
           ],
@@ -122,7 +123,7 @@ class CircularProgressPainter extends CustomPainter {
     // Draw on time arc (blue)
     if (onTimePercentage > 0) {
       final onTimePaint = Paint()
-        ..color = Colors.blue
+        ..color = AppColors.primary
         ..style = PaintingStyle.stroke
         ..strokeWidth = strokeWidth
         ..strokeCap = StrokeCap.round;

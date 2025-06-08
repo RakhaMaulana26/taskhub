@@ -82,3 +82,40 @@ final ThemeData appDarkTheme = ThemeData.dark().copyWith(
       ),
   dividerColor: AppColors.grey700,
 );
+
+final ThemeData appLightTheme = ThemeData.light().copyWith(
+  scaffoldBackgroundColor: AppColors.background,
+  appBarTheme: AppBarTheme(
+    backgroundColor: AppColors.background,
+    elevation: 0,
+    titleTextStyle: TextStyle(
+      color: AppColors.textPrimary,
+      fontSize: 16.sp,
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+  colorScheme: ColorScheme.light(
+    primary: AppColors.primary,
+    secondary: AppColors.secondary,
+    surface: AppColors.surface,
+    background: AppColors.background,
+    error: AppColors.error,
+    onPrimary: AppColors.onPrimary,
+    onSecondary: AppColors.onSecondary,
+    onSurface: AppColors.onSurface,
+    onBackground: AppColors.onBackground,
+    onError: AppColors.onError,
+    brightness: Brightness.light,
+  ),
+  cardTheme: CardTheme(
+    color: AppColors.surface,
+    elevation: 0,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    margin: EdgeInsets.only(bottom: 1.5.h),
+  ),
+  textTheme: ThemeData.light().textTheme.apply(
+    bodyColor: AppColors.textPrimary,
+    displayColor: AppColors.textPrimary,
+  ),
+  dividerColor: AppColors.grey700,
+);

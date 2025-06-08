@@ -3,7 +3,9 @@ import '../models/task.dart';
 import '../models/task_status.dart';
 import '../models/user.dart';
 import '../widgets/task_progress_indicator.dart';
-import 'statistics_screen.dart';
+import '../../statistik/screens/statistics_screen.dart';
+import '../../navbar/bottom_navbar.dart';
+import 'package:taskhub/config/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,7 +17,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final User _user = User(
     name: 'Fufufafa',
-    fullName: 'Ayo ganyany fufufafa',
+    fullName: 'Rembo',
     profileImage: 'https://i.pravatar.cc/150?img=3',
     weeklyProgress: 75,
   );
@@ -64,7 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -73,20 +77,29 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(),
+                const SizedBox(height: 32),
+                _buildStatisticsCard(theme),
                 const SizedBox(height: 16),
-                _buildSearchBar(),
+                _buildTodayTasksSection(theme),
                 const SizedBox(height: 16),
-                _buildStatisticsCard(),
-                const SizedBox(height: 16),
-                _buildTodayTasksSection(),
-                const SizedBox(height: 16),
-                _buildUpcomingTasksSection(),
+                _buildUpcomingTasksSection(theme),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: BottomNavBar(
+          currentIndex: 0,
+          onTap: (idx) {
+            navigateToNavBarPage(context, idx);
+          },
+          onCenterButtonTap: () {
+            // TODO: Aksi untuk tombol lingkaran tengah
+          },
+        ),
+      ),
     );
   }
 
@@ -121,18 +134,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(ThemeData theme) {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: Colors.white,
         borderRadius: BorderRadius.circular(22),
       ),
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search',
-          hintStyle: TextStyle(color: Colors.grey[400]),
-          prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+          hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
+          prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.5)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
@@ -140,11 +153,11 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStatisticsCard() {
+  Widget _buildStatisticsCard(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.widget,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -160,17 +173,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: CircularProgressIndicator(
                     value: _user.weeklyProgress / 100,
                     strokeWidth: 8,
-                    backgroundColor: Colors.blue.withOpacity(0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-                  ),
-                ),
-                Center(
-                  child: Text(
-                    '${_user.weeklyProgress}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
+                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
                   ),
                 ),
               ],
@@ -192,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   'Pantau statistik kegiatanmu disini',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.grey[400],
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -208,8 +212,8 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.colorScheme.primary,
+              foregroundColor: theme.colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -221,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTodayTasksSection() {
+  Widget _buildTodayTasksSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -245,14 +249,14 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: _todayTasks.length,
           itemBuilder: (context, index) {
             final task = _todayTasks[index];
-            return _buildTaskCard(task);
+            return _buildTaskCard(task, theme);
           },
         ),
       ],
     );
   }
 
-  Widget _buildUpcomingTasksSection() {
+  Widget _buildUpcomingTasksSection(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -270,18 +274,18 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: _upcomingTasks.length,
           itemBuilder: (context, index) {
             final task = _upcomingTasks[index];
-            return _buildUpcomingTaskCard(task);
+            return _buildUpcomingTaskCard(task, theme);
           },
         ),
       ],
     );
   }
 
-  Widget _buildTaskCard(Task task) {
+  Widget _buildTaskCard(Task task, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.widget,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -291,11 +295,11 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               CircleAvatar(
                 radius: 12,
-                backgroundColor: task.category == 'Akademik' ? Colors.blue : Colors.green,
+                backgroundColor: theme.colorScheme.primary,
                 child: Icon(
                   task.category == 'Akademik' ? Icons.school : Icons.fitness_center,
                   size: 14,
-                  color: Colors.white,
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
               const SizedBox(width: 8),
@@ -303,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 task.category,
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[400],
+                  color: theme.colorScheme.onSurface.withOpacity(0.5),
                 ),
               ),
             ],
@@ -323,7 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
             '${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[400],
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ],
@@ -331,12 +335,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildUpcomingTaskCard(Task task) {
+  Widget _buildUpcomingTaskCard(Task task, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.widget,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -345,12 +349,12 @@ class _HomeScreenState extends State<HomeScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.grey[800],
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.description_outlined,
-              color: Colors.grey[400],
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
           const SizedBox(width: 12),
@@ -372,8 +376,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         margin: const EdgeInsets.only(left: 8),
                         width: 8,
                         height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.blue,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -388,43 +392,11 @@ class _HomeScreenState extends State<HomeScreen> {
             '${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[400],
+              color: theme.colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      backgroundColor: Colors.black,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
-      type: BottomNavigationBarType.fixed,
-      currentIndex: 0,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(Icons.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.book),
-          label: 'Jurnal',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle, size: 40),
-          label: '',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.task),
-          label: 'Tugas',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.person),
-          label: 'Profil',
-        ),
-      ],
     );
   }
 }
