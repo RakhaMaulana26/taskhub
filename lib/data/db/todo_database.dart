@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/todo.dart';
 import '../models/subtask.dart';
+import '../models/notification.dart';
 
 class TodoDatabase {
   static final TodoDatabase instance = TodoDatabase._init();
@@ -30,7 +31,7 @@ class TodoDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         category TEXT NOT NULL,
-        deadline INTEGER,
+        deadline TEXT,
         notification INTEGER,
         description TEXT,
         isDone INTEGER NOT NULL
@@ -48,16 +49,17 @@ class TodoDatabase {
       )
     ''');
 
-    // Buat tabel subtasks
+    // Buat tabel Notif
     await db.execute('''
-      CREATE TABLE subtasks (
+      CREATE TABLE notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         todoId INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        isDone INTEGER NOT NULL,
+        timestamp INTEGER NOT NULL,
+        isSent INTEGER NOT NULL DEFAULT 0,
         FOREIGN KEY (todoId) REFERENCES todos(id) ON DELETE CASCADE
       )
     ''');
+
   }
 
   // CRUD Todo
@@ -151,4 +153,45 @@ class TodoDatabase {
     final db = await instance.database;
     db.close();
   }
+
+  // NOTIFICATION
+  // CREATE
+  Future<NotificationModel> createNotification(NotificationModel notif) async {
+    final db = await instance.database;
+    final id = await db.insert('notifications', notif.toMap());
+    return notif.copyWith(id: id);
+  }
+
+// READ all notifs by todoId
+  Future<List<NotificationModel>> readNotificationsByTodoId(int todoId) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'notifications',
+      where: 'todoId = ?',
+      whereArgs: [todoId],
+    );
+    return result.map((json) => NotificationModel.fromMap(json)).toList();
+  }
+
+// UPDATE isSent
+  Future<int> updateNotification(NotificationModel notif) async {
+    final db = await instance.database;
+    return await db.update(
+      'notifications',
+      notif.toMap(),
+      where: 'id = ?',
+      whereArgs: [notif.id],
+    );
+  }
+
+// DELETE satu notif
+  Future<int> deleteNotification(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'notifications',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
 }
