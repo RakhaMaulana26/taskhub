@@ -211,7 +211,7 @@ class _SchedulePageState extends State<SchedulePage> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text('Jadwal'),
+        title: Text('Jadwal'),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(32),
           child: Padding(

@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sizer/sizer.dart';
-import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
 import 'package:taskhub/config/theme/app_theme.dart'; // Pastikan path ini benar
 import 'package:flutter/services.dart';
 import 'features/home/screens/home_screen.dart';
+import 'features/notification/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +16,9 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+  await NotificationService.initialize();
+  await NotificationService.scheduleAllPendingNotifications();
+  await NotificationService.requestExactAlarmPermissionOnce();
   runApp(const MainApp());
 }
 
@@ -38,7 +41,6 @@ class MainApp extends StatelessWidget {
           ],
           supportedLocales: const [
             Locale('id', 'ID'),
-            Locale('en', 'US'),
           ],
           home: const HomeScreen(),
         );
