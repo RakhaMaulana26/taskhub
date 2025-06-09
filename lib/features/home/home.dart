@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskhub/features/crud/crud.dart';
 
 void main() {
   runApp(const TaskApp());
@@ -78,27 +79,43 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 30),
 
-              // Search Bar
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(25),
+
+              SearchBar(
+                // controller: _searchController,
+                hintText: 'Cari...',
+                leading: Icon(Icons.search, color: Colors.grey[600]),
+                backgroundColor: MaterialStateProperty.all(Colors.white),
+                elevation: MaterialStateProperty.all(0),
+                padding: MaterialStateProperty.all(const EdgeInsets.symmetric(horizontal: 16)),
+                textStyle: MaterialStateProperty.all(
+                  TextStyle(color: Colors.black), // Teks berwarna hitam
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.search, color: Colors.grey[500]),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Search',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
+                hintStyle: MaterialStateProperty.all(
+                  TextStyle(color: Colors.grey[600]), // Hint text berwarna abu-abu
                 ),
+                // onChanged: (value) => _filterResults(value),
               ),
+              // Search Bar
+              // Container(
+              //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+              //   decoration: BoxDecoration(
+              //     color: Colors.grey[800],
+              //     borderRadius: BorderRadius.circular(25),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Icon(Icons.search, color: Colors.grey[500]),
+              //       const SizedBox(width: 10),
+              //       Text(
+              //         'Search',
+              //         style: TextStyle(
+              //           color: Colors.grey[500],
+              //           fontSize: 16,
+              //         ),
+              //       ),
+              //     ],
+              //   ),
+              // ),
 
               const SizedBox(height: 30),
 
@@ -117,12 +134,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       height: 80,
                       child: Stack(
                         children: [
-                          CircularProgressIndicator(
-                            value: 0.75,
-                            strokeWidth: 8,
-                            backgroundColor: Colors.grey[700],
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              const Color(0xFF4A90E2),
+                          Center(
+                            child: CircularProgressIndicator(
+                              value: 0.75,
+                              strokeWidth: 8,
+                              backgroundColor: Colors.grey[700],
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                const Color(0xFF4A90E2),
+                              ),
                             ),
                           ),
                           Center(
@@ -300,7 +319,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
       // Floating Action Button
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TodoFormPage()),
+          );
+        },
         backgroundColor: const Color(0xFF4A90E2),
         child: Icon(Icons.add, color: Colors.white),
       ),
