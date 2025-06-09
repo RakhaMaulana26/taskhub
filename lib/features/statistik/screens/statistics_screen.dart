@@ -44,7 +44,11 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
-        title: const Text('Statistik'),
+        title: const Text('Statistik',
+          style: TextStyle(
+            color: Colors.white
+          ),
+        ),
       ),
       body: SafeArea(
         child: Column(

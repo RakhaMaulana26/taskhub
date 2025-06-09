@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:taskhub/config/theme/app_theme.dart';
 
 class TaskProgressIndicator extends StatelessWidget {
   final int progress;
@@ -41,7 +42,7 @@ class TaskProgressIndicator extends StatelessWidget {
               child: Container(
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.blue,
+                  color: AppColors.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),

@@ -39,6 +39,14 @@ class _HomeScreenState extends State<HomeScreen> {
       progress: 60,
       category: 'Olahraga',
     ),
+    Task(
+      id: '3',
+      title: 'Jogging',
+      dueDate: DateTime.now().copyWith(hour: 12, minute: 45),
+      status: TaskStatus.inProgress,
+      progress: 60,
+      category: 'Akademik',
+    ),
   ];
 
   final List<Task> _upcomingTasks = [
@@ -237,20 +245,20 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.2,
+        SizedBox(
+          height: 180, // atur tinggi card sesuai kebutuhan
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _todayTasks.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              final task = _todayTasks[index];
+              return SizedBox(
+                width: 220, // atur lebar card sesuai kebutuhan
+                child: _buildTaskCard(task, theme),
+              );
+            },
           ),
-          itemCount: _todayTasks.length,
-          itemBuilder: (context, index) {
-            final task = _todayTasks[index];
-            return _buildTaskCard(task, theme);
-          },
         ),
       ],
     );
@@ -282,55 +290,58 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTaskCard(Task task, ThemeData theme) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.widget,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: theme.colorScheme.primary,
-                child: Icon(
-                  task.category == 'Akademik' ? Icons.school : Icons.fitness_center,
-                  size: 14,
-                  color: theme.colorScheme.onPrimary,
+    return SizedBox(
+      height: 80, // atur tinggi card sesuai kebutuhan
+      child: Container(
+        height: 120,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.widget,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 12,
+                  backgroundColor: theme.colorScheme.primary,
+                  child: Icon(
+                    task.category == 'Akademik' ? Icons.school : Icons.fitness_center,
+                    size: 14,
+                    color: theme.colorScheme.onPrimary,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                task.category,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                const SizedBox(width: 8),
+                Text(
+                  task.category,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.white,
+                  ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 48),
+            Text(
+              task.title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            task.title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
             ),
-          ),
-          const Spacer(),
-          TaskProgressIndicator(progress: task.progress),
-          const SizedBox(height: 8),
-          Text(
-            '${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}',
-            style: TextStyle(
-              fontSize: 12,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+            TaskProgressIndicator(progress: task.progress),
+            const SizedBox(height: 8),
+            Text(
+              '${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
