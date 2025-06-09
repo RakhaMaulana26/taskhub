@@ -260,51 +260,6 @@ class _TodoFormPageState extends State<TodoFormPage> {
                   );
                 },
               ),
-              const SizedBox(height: 16),
-              // Notifikasi
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  ElevatedButton(
-                    onPressed: _addNotificationField,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      minimumSize: const Size(44, 44), // persegi
-                      padding: EdgeInsets.zero,
-                      elevation: 0,
-                    ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text('Tambah Notifikasi', style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              ListView.builder(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                itemCount: _notificationControllers.length,
-                itemBuilder: (context, index) {
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _notificationControllers[index],
-                          decoration: InputDecoration(labelText: 'Waktu Notifikasi'),
-                          readOnly: true,
-                          onTap: () => _selectNotificationTime(index),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _removeNotificationField(index),
-                      ),
-                    ],
-                  );
-                },
-              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,

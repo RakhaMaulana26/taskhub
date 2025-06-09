@@ -4,6 +4,7 @@ class TaskPeriod {
   final int totalTasks;
   final int onTimePercentage;
   final int latePercentage;
+  final int overduePercentage;
   final int notCompletedPercentage;
 
   TaskPeriod({
@@ -12,6 +13,7 @@ class TaskPeriod {
     required this.totalTasks,
     required this.onTimePercentage,
     required this.latePercentage,
+    required this.overduePercentage,
     required this.notCompletedPercentage,
   });
 }

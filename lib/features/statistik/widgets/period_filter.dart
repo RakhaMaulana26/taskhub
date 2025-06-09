@@ -23,12 +23,6 @@ class PeriodFilterWidget extends StatelessWidget {
       children: [
         _buildFilterButton(
           context,
-          'Minggu ini',
-          PeriodFilter.thisWeek,
-        ),
-        const SizedBox(width: 8),
-        _buildFilterButton(
-          context,
           'Mingguan',
           PeriodFilter.weekly,
         ),

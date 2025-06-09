@@ -35,12 +35,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchTodayTodos() async {
     final allTodos = await TodoDatabase.instance.readAllTodos();
     final now = DateTime.now();
-    final todayTodos = allTodos.where((todo) {
-      if (todo.deadline == null) return false;
-      return todo.deadline!.year == now.year &&
-          todo.deadline!.month == now.month &&
-          todo.deadline!.day == now.day;
-    }).toList();
+    final todayTodos =
+        allTodos.where((todo) {
+          if (todo.deadline == null) return false;
+          return todo.deadline!.year == now.year &&
+              todo.deadline!.month == now.month &&
+              todo.deadline!.day == now.day;
+        }).toList();
     setState(() {
       _todayTodos = todayTodos;
       _isLoading = false;
@@ -50,13 +51,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _fetchUpcomingTodos() async {
     final allTodos = await TodoDatabase.instance.readAllTodos();
     final now = DateTime.now();
-    final upcomingTodos = allTodos.where((todo) {
-      if (todo.deadline == null) return false;
-      final d = todo.deadline!;
-      // exclude today
-      return !(d.year == now.year && d.month == now.month && d.day == now.day) &&
-        d.isAfter(DateTime(now.year, now.month, now.day, 0, 0, 0));
-    }).toList();
+    final upcomingTodos =
+        allTodos.where((todo) {
+          if (todo.deadline == null) return false;
+          final d = todo.deadline!;
+          // exclude today
+          return !(d.year == now.year &&
+                  d.month == now.month &&
+                  d.day == now.day) &&
+              d.isAfter(DateTime(now.year, now.month, now.day, 0, 0, 0));
+        }).toList();
     setState(() {
       _upcomingTodos = upcomingTodos;
     });
@@ -76,7 +80,21 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatDeadline(DateTime deadline) {
     // Format: Hari, Tanggal Bulan Tahun
     final weekDays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    final monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final monthNames = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     return '${weekDays[deadline.weekday % 7]}, ${deadline.day} ${monthNames[deadline.month]} ${deadline.year}';
   }
 
@@ -93,18 +111,15 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               _greeting(),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 4,),
+            SizedBox(height: 4),
             Text(
               _user.fullName,
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[400],
-                fontWeight: FontWeight.w400
+                fontWeight: FontWeight.w400,
               ),
             ),
           ],
@@ -124,9 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
           builder: (context, constraints) {
             return SingleChildScrollView(
               child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
-                ),
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -182,7 +195,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     value: _user.weeklyProgress / 100,
                     strokeWidth: 8,
                     backgroundColor: theme.colorScheme.primary.withOpacity(0.2),
-                    valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      theme.colorScheme.primary,
+                    ),
                   ),
                 ),
               ],
@@ -195,17 +210,11 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 const Text(
                   'Statistik Mingguan',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'Pantau statistik kegiatanmu disini',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.white),
                 ),
               ],
             ),
@@ -244,25 +253,37 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Text(
           'Tugas hari ini: ${_todayTodos.length}',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         FutureBuilder<List<_TodoProgress>>(
-          future: Future.wait(sortedTodos.map((todo) async {
-            final progress = await TodoDatabase.instance.getTodoProgress(todo.id!);
-            final isDoneFinal = progress == 1.0;
-            return _TodoProgress(todo: todo, progress: progress, isDoneFinal: isDoneFinal);
-          }).toList()),
+          future: Future.wait(
+            sortedTodos.map((todo) async {
+              final progress = await TodoDatabase.instance.getTodoProgress(
+                todo.id!,
+              );
+              final isDoneFinal = progress == 1.0;
+              return _TodoProgress(
+                todo: todo,
+                progress: progress,
+                isDoneFinal: isDoneFinal,
+              );
+            }).toList(),
+          ),
           builder: (context, snapshot) {
             if (_isLoading || !snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
             final todoProgressList = snapshot.data!;
             if (todoProgressList.isEmpty) {
-              return const Text('Tidak ada tugas hari ini');
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(height: 28),
+                  Center(child: Text('Tidak ada tugas hari ini')),
+                  SizedBox(height: 28),
+                ],
+              );
             }
             return SizedBox(
               height: 220,
@@ -279,16 +300,21 @@ class _HomeScreenState extends State<HomeScreen> {
                       theme: theme,
                       progress: tp.progress,
                       isDoneFinal: tp.isDoneFinal,
-                      onToggle: tp.isDoneFinal
-                          ? null
-                          : () async {
-                              final updatedTodo = tp.todo.copyWith(isDone: true);
-                              await TodoDatabase.instance.updateTodo(updatedTodo);
-                              setState(() {
-                                final idx = _todayTodos.indexOf(tp.todo);
-                                if (idx != -1) _todayTodos[idx] = updatedTodo;
-                              });
-                            },
+                      onToggle:
+                          tp.isDoneFinal
+                              ? null
+                              : () async {
+                                final updatedTodo = tp.todo.copyWith(
+                                  isDone: true,
+                                );
+                                await TodoDatabase.instance.updateTodo(
+                                  updatedTodo,
+                                );
+                                setState(() {
+                                  final idx = _todayTodos.indexOf(tp.todo);
+                                  if (idx != -1) _todayTodos[idx] = updatedTodo;
+                                });
+                              },
                     ),
                   );
                 },
@@ -311,18 +337,23 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         const Text(
           'Tugas Mendatang',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         FutureBuilder<List<_TodoProgress>>(
-          future: Future.wait(sortedTodos.map((todo) async {
-            final progress = await TodoDatabase.instance.getTodoProgress(todo.id!);
-            final isDoneFinal = progress == 1.0;
-            return _TodoProgress(todo: todo, progress: progress, isDoneFinal: isDoneFinal);
-          }).toList()),
+          future: Future.wait(
+            sortedTodos.map((todo) async {
+              final progress = await TodoDatabase.instance.getTodoProgress(
+                todo.id!,
+              );
+              final isDoneFinal = progress == 1.0;
+              return _TodoProgress(
+                todo: todo,
+                progress: progress,
+                isDoneFinal: isDoneFinal,
+              );
+            }).toList(),
+          ),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
@@ -344,23 +375,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     theme: theme,
                     progress: tp.progress,
                     isDoneFinal: tp.isDoneFinal,
-                    onToggle: tp.isDoneFinal
-                        ? null
-                        : () async {
-                            final updatedTodo = tp.todo.copyWith(isDone: true);
-                            await TodoDatabase.instance.updateTodo(updatedTodo);
-                            setState(() {
-                              final idx = _upcomingTodos.indexOf(tp.todo);
-                              if (idx != -1) _upcomingTodos[idx] = updatedTodo;
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Berhasil menyelesaikan tugas!', style: TextStyle(color: Colors.white)),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          },
+                    onToggle:
+                        tp.isDoneFinal
+                            ? null
+                            : () async {
+                              final updatedTodo = tp.todo.copyWith(
+                                isDone: true,
+                              );
+                              await TodoDatabase.instance.updateTodo(
+                                updatedTodo,
+                              );
+                              setState(() {
+                                final idx = _upcomingTodos.indexOf(tp.todo);
+                                if (idx != -1)
+                                  _upcomingTodos[idx] = updatedTodo;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    'Berhasil menyelesaikan tugas!',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                  backgroundColor: Colors.green,
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            },
                   ),
                 );
               }),
@@ -379,7 +419,14 @@ class TodayTaskCard extends StatelessWidget {
   final double progress;
   final bool isDoneFinal;
   final VoidCallback? onToggle;
-  const TodayTaskCard({super.key, required this.todo, required this.theme, required this.progress, required this.isDoneFinal, this.onToggle});
+  const TodayTaskCard({
+    super.key,
+    required this.todo,
+    required this.theme,
+    required this.progress,
+    required this.isDoneFinal,
+    this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -452,14 +499,16 @@ class TodayTaskCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: todo.isDone ? AppColors.primary : Colors.transparent,
                     border: Border.all(
-                      color: todo.isDone ? AppColors.primary : AppColors.primary,
+                      color:
+                          todo.isDone ? AppColors.primary : AppColors.primary,
                       width: 2,
                     ),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: todo.isDone
-                      ? Icon(Icons.check, color: Colors.white, size: 22)
-                      : null,
+                  child:
+                      todo.isDone
+                          ? Icon(Icons.check, color: Colors.white, size: 22)
+                          : null,
                 ),
               ),
               const SizedBox(width: 12),
@@ -481,10 +530,7 @@ class TodayTaskCard extends StatelessWidget {
             children: [
               Text(
                 '${(progress * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.white),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -503,10 +549,7 @@ class TodayTaskCard extends StatelessWidget {
             todo.deadline != null
                 ? '${todo.deadline!.hour}:${todo.deadline!.minute.toString().padLeft(2, '0')}'
                 : '-',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-            ),
+            style: TextStyle(fontSize: 16, color: Colors.white),
           ),
         ],
       ),
@@ -521,7 +564,14 @@ class UpcomingTaskCard extends StatelessWidget {
   final double progress;
   final bool isDoneFinal;
   final VoidCallback? onToggle;
-  const UpcomingTaskCard({super.key, required this.todo, required this.theme, required this.progress, required this.isDoneFinal, this.onToggle});
+  const UpcomingTaskCard({
+    super.key,
+    required this.todo,
+    required this.theme,
+    required this.progress,
+    required this.isDoneFinal,
+    this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -538,7 +588,8 @@ class UpcomingTaskCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center, // ubah dari start ke center
+                crossAxisAlignment:
+                    CrossAxisAlignment.center, // ubah dari start ke center
                 children: [
                   // Toggle di kiri
                   GestureDetector(
@@ -547,16 +598,23 @@ class UpcomingTaskCard extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: todo.isDone ? AppColors.primary : Colors.transparent,
+                        color:
+                            todo.isDone
+                                ? AppColors.primary
+                                : Colors.transparent,
                         border: Border.all(
-                          color: todo.isDone ? AppColors.primary : AppColors.primary,
+                          color:
+                              todo.isDone
+                                  ? AppColors.primary
+                                  : AppColors.primary,
                           width: 2,
                         ),
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: todo.isDone
-                          ? Icon(Icons.check, color: Colors.white, size: 22)
-                          : null,
+                      child:
+                          todo.isDone
+                              ? Icon(Icons.check, color: Colors.white, size: 22)
+                              : null,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -604,11 +662,13 @@ class UpcomingTaskCard extends StatelessWidget {
                           child: Text(
                             todo.deadline != null
                                 ? '${todo.deadline!.hour}:${todo.deadline!.minute.toString().padLeft(2, '0')}, '
-                                  '${_formatDeadline(todo.deadline!)}'
+                                    '${_formatDeadline(todo.deadline!)}'
                                 : '-',
                             style: TextStyle(
                               fontSize: 12,
-                              color: theme.colorScheme.onSurface.withOpacity(0.5),
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.5,
+                              ),
                             ),
                           ),
                         ),
@@ -644,7 +704,21 @@ class UpcomingTaskCard extends StatelessWidget {
   String _formatDeadline(DateTime deadline) {
     // Format: Hari, Tanggal Bulan Tahun
     final weekDays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
-    final monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    final monthNames = [
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'Mei',
+      'Jun',
+      'Jul',
+      'Agu',
+      'Sep',
+      'Okt',
+      'Nov',
+      'Des',
+    ];
     return '${weekDays[deadline.weekday % 7]}, ${deadline.day} ${monthNames[deadline.month]} ${deadline.year}';
   }
 }
@@ -654,5 +728,9 @@ class _TodoProgress {
   final Todo todo;
   final double progress;
   final bool isDoneFinal;
-  _TodoProgress({required this.todo, required this.progress, required this.isDoneFinal});
+  _TodoProgress({
+    required this.todo,
+    required this.progress,
+    required this.isDoneFinal,
+  });
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/task_period.dart';
-import '../models/task.dart';
-import '../models/task_status.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
+import 'package:taskhub/data/db/todo_database.dart';
+import 'package:taskhub/data/models/todo.dart';
 
 class DetailStatisticsScreen extends StatefulWidget {
   final TaskPeriod period;
@@ -17,7 +17,8 @@ class DetailStatisticsScreen extends StatefulWidget {
 }
 
 class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
-  late List<Task> _tasks;
+  List<Todo> _tasks = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -25,46 +26,18 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
     _loadTasks();
   }
 
-  void _loadTasks() {
-    // In a real app, you would fetch tasks from a database or API
-    _tasks = [
-      Task(
-        id: '1',
-        title: 'Tugas Basis Data',
-        dueDate: DateTime(2025, 4, 27, 23, 59),
-        status: TaskStatus.completed,
-      ),
-      Task(
-        id: '2',
-        title: 'Tugas Basis Data',
-        dueDate: DateTime(2025, 4, 27, 23, 59),
-        status: TaskStatus.completed,
-      ),
-      Task(
-        id: '3',
-        title: 'Tugas Basis Data',
-        dueDate: DateTime(2025, 4, 27, 23, 59),
-        status: TaskStatus.completedLate,
-      ),
-      Task(
-        id: '4',
-        title: 'Tugas Basis Data',
-        dueDate: DateTime(2025, 4, 27, 23, 59),
-        status: TaskStatus.notCompleted,
-      ),
-      Task(
-        id: '5',
-        title: 'Tugas Basis Data',
-        dueDate: DateTime(2025, 4, 27, 23, 59),
-        status: TaskStatus.notCompleted,
-      ),
-    ];
+  Future<void> _loadTasks() async {
+    final allTodos = await TodoDatabase.instance.readAllTodos();
+    final tasks = allTodos.where((t) => t.deadline != null && !t.deadline!.isBefore(widget.period.startDate) && !t.deadline!.isAfter(widget.period.endDate)).toList();
+    setState(() {
+      _tasks = tasks;
+      _isLoading = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final dateFormat = "${widget.period.startDate.day} ${_getMonthName(widget.period.startDate.month)} - ${widget.period.endDate.day} ${_getMonthName(widget.period.endDate.month)} ${widget.period.endDate.year}";
-
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -102,13 +75,17 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: _tasks.length,
-                itemBuilder: (context, index) {
-                  final task = _tasks[index];
-                  return _buildTaskItem(task);
-                },
-              ),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _tasks.isEmpty
+                      ? const Center(child: Text('Tidak ada tugas pada periode ini'))
+                      : ListView.builder(
+                          itemCount: _tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = _tasks[index];
+                            return _buildTaskItem(task);
+                          },
+                        ),
             ),
           ],
         ),
@@ -116,10 +93,9 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
     );
   }
 
-  Widget _buildTaskItem(Task task) {
-    final dayName = _getDayName(task.dueDate.weekday);
-    final dateFormat = "${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}, $dayName, ${task.dueDate.day} ${_getMonthName(task.dueDate.month)} ${task.dueDate.year}";
-
+  Widget _buildTaskItem(Todo task) {
+    final dayName = _getDayName(task.deadline!.weekday);
+    final dateFormat = "${task.deadline!.hour}:${task.deadline!.minute.toString().padLeft(2, '0')}, $dayName, ${task.deadline!.day} ${_getMonthName(task.deadline!.month)} ${task.deadline!.year}";
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
@@ -153,57 +129,45 @@ class _DetailStatisticsScreenState extends State<DetailStatisticsScreen> {
                 ],
               ),
             ),
-            _buildStatusBadge(task.status),
+            _buildStatusBadge(task),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatusBadge(TaskStatus status) {
+  Widget _buildStatusBadge(Todo task) {
     String text;
     Color backgroundColor;
-
-    switch (status) {
-      case TaskStatus.completed:
-        text = 'Selesai';
-        backgroundColor = AppColors.primary;
-        break;
-      case TaskStatus.completedLate:
-        text = 'Selesai Terlambat';
-        backgroundColor = AppColors.primary;
-        break;
-      case TaskStatus.notCompleted:
-        text = 'Belum Selesai';
-        backgroundColor = Colors.transparent;
-        break;
-      case TaskStatus.inProgress:
-        text = 'Sedang Berlangsung';
-        backgroundColor = Colors.orange;
-        break;
-      case TaskStatus.notStarted:
-        text = 'Belum Dimulai';
-        backgroundColor = Colors.grey;
-        break;
+    if (task.isDone && task.deadline != null && task.deadline!.isAfter(DateTime.now())) {
+      text = 'Selesai';
+      backgroundColor = AppColors.primary;
+    } else if (task.isDone && task.deadline != null && task.deadline!.isBefore(DateTime.now())) {
+      text = 'Selesai Terlambat';
+      backgroundColor = Colors.yellow;
+    } else if (!task.isDone && task.deadline != null && task.deadline!.isBefore(DateTime.now())) {
+      text = 'Terlambat';
+      backgroundColor = Colors.red;
+    } else if (!task.isDone) {
+      text = 'Belum Selesai';
+      backgroundColor = Colors.transparent;
+    } else {
+      text = 'Tidak diketahui';
+      backgroundColor = Colors.grey;
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(20),
-        border: status == TaskStatus.notCompleted
-            ? Border.all(color: Colors.grey)
-            : null,
+        border: text == 'Belum Selesai' ? Border.all(color: Colors.grey) : null,
       ),
       child: Text(
         text,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: status == TaskStatus.notCompleted
-              ? Colors.grey
-              : Colors.white,
+          color: text == 'Belum Selesai' ? Colors.grey : Colors.white,
         ),
       ),
     );
