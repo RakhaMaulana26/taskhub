@@ -5,6 +5,7 @@ import '../../navbar/bottom_navbar.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
 import 'package:taskhub/data/db/todo_database.dart';
 import 'package:taskhub/data/models/todo.dart';
+import 'package:taskhub/features/achievements/achievement_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,11 +26,54 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Todo> _upcomingTodos = [];
   bool _isLoading = true;
 
+  // Tambahan untuk rank
+  int _currentPoints = 0;
+  String _currentRankAsset = 'assets/ranks/warrior.png';
+  final List<_RankPhase> _ranks = const [
+    _RankPhase('assets/ranks/warrior.png', 0, 'Warrior'),
+    _RankPhase('assets/ranks/elite.png', 250, 'Elite'),
+    _RankPhase('assets/ranks/master.png', 500, 'Master'),
+    _RankPhase('assets/ranks/grandmaster.png', 750, 'Grandmaster'),
+    _RankPhase('assets/ranks/epic.png', 1000, 'Epic'),
+    _RankPhase('assets/ranks/legend.png', 1250, 'Legend'),
+    _RankPhase('assets/ranks/mawi.png', 1500, 'Mythic'),
+    _RankPhase('assets/ranks/glory.png', 1750, 'Mythical Glory'),
+  ];
+
   @override
   void initState() {
     super.initState();
     _fetchTodayTodos();
     _fetchUpcomingTodos();
+    _loadCurrentRank();
+  }
+
+  Future<void> _loadCurrentRank() async {
+    final todos = await TodoDatabase.instance.readAllTodos();
+    int points = 0;
+    final now = DateTime.now();
+    for (final t in todos) {
+      if (t.isDone && t.deadline != null && t.deadline!.isAfter(now)) {
+        points += 20;
+      } else if (t.isDone && t.deadline != null && t.deadline!.isBefore(now)) {
+        points += 10;
+      } else if (!t.isDone && t.deadline != null && t.deadline!.isBefore(now)) {
+        points -= 20;
+      }
+    }
+    if (points < 0) points = 0;
+    String asset = _ranks.first.asset;
+    for (final r in _ranks) {
+      if (points >= r.points) {
+        asset = r.asset;
+      } else {
+        break;
+      }
+    }
+    setState(() {
+      _currentPoints = points;
+      _currentRankAsset = asset;
+    });
   }
 
   Future<void> _fetchTodayTodos() async {
@@ -126,10 +170,39 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: CircleAvatar(
-              radius: 20,
-              backgroundImage: NetworkImage(_user.profileImage),
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Row(
+              children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset(_currentRankAsset, width: 32, height: 32),
+                    Text(
+                      '$_currentPoints poin',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white70,
+                        height: 1.1,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _getRankBorderColor(_currentRankAsset),
+                      width: 3,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(_user.profileImage),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -409,6 +482,30 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     );
+  }
+
+  // Tambahkan fungsi untuk warna border rank
+  Color _getRankBorderColor(String asset) {
+    switch (asset) {
+      case 'assets/ranks/warrior.png':
+        return Colors.brown;
+      case 'assets/ranks/elite.png':
+        return Colors.grey;
+      case 'assets/ranks/master.png':
+        return Color(0xFFFF9800); // Gold
+      case 'assets/ranks/grandmaster.png':
+        return Color.fromARGB(255, 57, 57, 55); // Purple
+      case 'assets/ranks/epic.png':
+        return Color.fromARGB(255, 2, 96, 114); // Deep Purple
+      case 'assets/ranks/legend.png':
+        return Colors.amber;
+      case 'assets/ranks/mawi.png':
+        return Colors.pink;
+      case 'assets/ranks/glory.png':
+        return Colors.red;
+      default:
+        return Colors.brown;
+    }
   }
 }
 
@@ -733,4 +830,12 @@ class _TodoProgress {
     required this.progress,
     required this.isDoneFinal,
   });
+}
+
+// Tambahkan class _RankPhase agar tidak error
+class _RankPhase {
+  final String asset;
+  final int points;
+  final String name;
+  const _RankPhase(this.asset, this.points, this.name);
 }

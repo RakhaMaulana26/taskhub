@@ -121,8 +121,9 @@ class _TodoFormPageState extends State<TodoFormPage> {
       // Navigasi setelah snackbar muncul
       Future.delayed(const Duration(milliseconds: 1200), () {
         if (mounted) {
-          Navigator.of(context).pushReplacement(
+          Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const SchedulePage()),
+            (route) => false,
           );
         }
       });

@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:taskhub/features/navbar/bottom_navbar.dart';
 import 'package:taskhub/data/db/todo_database.dart';
 import 'package:taskhub/data/models/todo.dart';
+import 'package:taskhub/features/home/screens/home_screen.dart' show UpcomingTaskCard;
 
 class SchedulePage extends StatefulWidget {
   const SchedulePage({super.key});
@@ -565,71 +566,18 @@ class _SchedulePageState extends State<SchedulePage> {
                         separatorBuilder: (context, idx) => SizedBox(height: 1.h),
                         itemBuilder: (context, idx) {
                           final todo = _todosForSelectedDate[idx];
-                          return Container(
-                            padding: EdgeInsets.all(3.w),
-                            decoration: BoxDecoration(
-                              color: AppColors.widget,
-                              borderRadius: BorderRadius.circular(3.w),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Checkbox toggle untuk isDone
-                                GestureDetector(
-                                  onTap: () async {
-                                    final updatedTodo = todo.copyWith(isDone: !todo.isDone);
-                                    await TodoDatabase.instance.updateTodo(updatedTodo);
-                                    setState(() {
-                                      _todosForSelectedDate[idx] = updatedTodo;
-                                    });
-                                  },
-                                  child: Icon(
-                                    todo.isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                                    color: todo.isDone ? AppColors.primary : AppColors.textSecondary,
-                                  ),
-                                ),
-                                SizedBox(width: 3.w),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        todo.title,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13.sp,
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                      if (todo.deadline != null)
-                                        Text(
-                                          DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(todo.deadline!),
-                                          style: TextStyle(
-                                            color: AppColors.textSecondary,
-                                            fontSize: 11.sp,
-                                          ),
-                                        ),
-                                      if (todo.category.isNotEmpty)
-                                        Container(
-                                          margin: EdgeInsets.only(top: 0.5.h),
-                                          padding: EdgeInsets.symmetric(horizontal: 2.w, vertical: 0.5.h),
-                                          decoration: BoxDecoration(
-                                            color: AppColors.primary.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(2.w),
-                                          ),
-                                          child: Text(
-                                            todo.category,
-                                            style: TextStyle(
-                                              color: AppColors.primary,
-                                              fontSize: 10.sp,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                          return UpcomingTaskCard(
+                            todo: todo,
+                            theme: theme,
+                            progress: todo.isDone ? 1.0 : 0.0, // progress, jika ingin lebih detail bisa diubah
+                            isDoneFinal: todo.isDone,
+                            onToggle: () async {
+                              final updatedTodo = todo.copyWith(isDone: !todo.isDone);
+                              await TodoDatabase.instance.updateTodo(updatedTodo);
+                              setState(() {
+                                _todosForSelectedDate[idx] = updatedTodo;
+                              });
+                            },
                           );
                         },
                       ),

@@ -67,7 +67,21 @@ class _AchievementPageState extends State<AchievementPage> {
     final double progress = (currentPoints / totalPoints).clamp(0.0, 1.0);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Achievement'),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Achievement'),
+            const SizedBox(height: 2),
+            Text(
+              'Jumlah Poin: $currentPoints',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
         backgroundColor: AppColors.background,
       ),
       backgroundColor: AppColors.background,
