@@ -6,6 +6,8 @@ import 'package:taskhub/features/home/screens/home_screen.dart';
 import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
 import 'package:taskhub/features/statistik/screens/statistics_screen.dart';
 import 'package:taskhub/features/crud/add_task.dart';
+import 'package:taskhub/features/taskpage/taskpage.dart';
+
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -150,6 +152,11 @@ void navigateToNavBarPage(BuildContext context, int idx) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => const SchedulePage()),
+    );
+  } else if (idx == 2) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const TaskScreen()),
     );
   } else if (idx == 3) {
     Navigator.pushReplacement(
