@@ -5,6 +5,7 @@ import 'package:taskhub/config/theme/app_theme.dart';
 import 'package:taskhub/features/home/screens/home_screen.dart';
 import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
 import 'package:taskhub/features/statistik/screens/statistics_screen.dart';
+import 'package:taskhub/features/crud/add_task.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -27,10 +28,10 @@ class BottomNavBar extends StatelessWidget {
       children: [
         Container(
           height: 9.h,
-          margin: EdgeInsets.only(top: 7.w), // beri ruang di atas agar tombol plus tidak terpotong
+          margin: EdgeInsets.only(top: 0), // Hapus margin top agar tidak ada area kosong/hitam di atas navbar
           padding: EdgeInsets.only(bottom: 0.h), // tambah padding bawah
           decoration: BoxDecoration(
-            color: AppColors.widget, // background widget
+            color: AppColors.widget, // Ubah dari AppColors.widget ke transparent agar tidak ada kotak hitam
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -71,7 +72,7 @@ class BottomNavBar extends StatelessWidget {
           ),
         ),
         Positioned(
-          top: -1.h, // pastikan tombol plus tidak terpotong di atas
+          top: -4.h, // pastikan tombol plus tidak terpotong di atas
           child: GestureDetector(
             onTap: onCenterButtonTap,
             child: Container(
@@ -80,13 +81,6 @@ class BottomNavBar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary, // warna primary
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
               ),
               child: Icon(Icons.add, color: Colors.white, size: 8.w),
             ),
@@ -163,4 +157,11 @@ void navigateToNavBarPage(BuildContext context, int idx) {
       MaterialPageRoute(builder: (_) => const StatisticsScreen()),
     );
   }
+}
+
+void navigateToAddTaskPage(BuildContext context) {
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const TodoFormPage()),
+  );
 }

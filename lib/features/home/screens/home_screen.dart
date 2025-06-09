@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/task.dart';
-import '../models/task_status.dart';
 import '../models/user.dart';
-import '../widgets/task_progress_indicator.dart';
 import '../../statistik/screens/statistics_screen.dart';
 import '../../navbar/bottom_navbar.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
+import 'package:taskhub/data/db/todo_database.dart';
+import 'package:taskhub/data/models/todo.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,44 +21,46 @@ class _HomeScreenState extends State<HomeScreen> {
     weeklyProgress: 75,
   );
 
-  final List<Task> _todayTasks = [
-    Task(
-      id: '1',
-      title: 'Tugas Basis Data',
-      dueDate: DateTime.now().copyWith(hour: 10, minute: 30),
-      status: TaskStatus.inProgress,
-      progress: 80,
-      category: 'Akademik',
-    ),
-    Task(
-      id: '2',
-      title: 'Jogging',
-      dueDate: DateTime.now().copyWith(hour: 12, minute: 45),
-      status: TaskStatus.inProgress,
-      progress: 60,
-      category: 'Olahraga',
-    ),
-    Task(
-      id: '3',
-      title: 'Jogging',
-      dueDate: DateTime.now().copyWith(hour: 12, minute: 45),
-      status: TaskStatus.inProgress,
-      progress: 60,
-      category: 'Akademik',
-    ),
-  ];
+  List<Todo> _todayTodos = [];
+  List<Todo> _upcomingTodos = [];
+  bool _isLoading = true;
 
-  final List<Task> _upcomingTasks = [
-    Task(
-      id: '3',
-      title: 'Tugas Basis Data',
-      dueDate: DateTime.now().add(const Duration(days: 1)).copyWith(hour: 10, minute: 30),
-      status: TaskStatus.notStarted,
-      progress: 0,
-      category: 'Akademik',
-      isImportant: true,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchTodayTodos();
+    _fetchUpcomingTodos();
+  }
+
+  Future<void> _fetchTodayTodos() async {
+    final allTodos = await TodoDatabase.instance.readAllTodos();
+    final now = DateTime.now();
+    final todayTodos = allTodos.where((todo) {
+      if (todo.deadline == null) return false;
+      return todo.deadline!.year == now.year &&
+          todo.deadline!.month == now.month &&
+          todo.deadline!.day == now.day;
+    }).toList();
+    setState(() {
+      _todayTodos = todayTodos;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _fetchUpcomingTodos() async {
+    final allTodos = await TodoDatabase.instance.readAllTodos();
+    final now = DateTime.now();
+    final upcomingTodos = allTodos.where((todo) {
+      if (todo.deadline == null) return false;
+      final d = todo.deadline!;
+      // exclude today
+      return !(d.year == now.year && d.month == now.month && d.day == now.day) &&
+        d.isAfter(DateTime(now.year, now.month, now.day, 0, 0, 0));
+    }).toList();
+    setState(() {
+      _upcomingTodos = upcomingTodos;
+    });
+  }
 
   String _greeting() {
     final hour = DateTime.now().hour;
@@ -72,28 +73,77 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  String _formatDeadline(DateTime deadline) {
+    // Format: Hari, Tanggal Bulan Tahun
+    final weekDays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    final monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return '${weekDays[deadline.weekday % 7]}, ${deadline.day} ${monthNames[deadline.month]} ${deadline.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
-                const SizedBox(height: 32),
-                _buildStatisticsCard(theme),
-                const SizedBox(height: 16),
-                _buildTodayTasksSection(theme),
-                const SizedBox(height: 16),
-                _buildUpcomingTasksSection(theme),
-              ],
+      appBar: AppBar(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        elevation: 0,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _greeting(),
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4,),
+            Text(
+              _user.fullName,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[400],
+                fontWeight: FontWeight.w400
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: NetworkImage(_user.profileImage),
             ),
           ),
+        ],
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildStatisticsCard(theme),
+                      const SizedBox(height: 16),
+                      _buildTodayTasksSection(theme),
+                      const SizedBox(height: 16),
+                      _buildUpcomingTasksSection(theme),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -104,58 +154,8 @@ class _HomeScreenState extends State<HomeScreen> {
             navigateToNavBarPage(context, idx);
           },
           onCenterButtonTap: () {
-            // TODO: Aksi untuk tombol lingkaran tengah
+            navigateToAddTaskPage(context);
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              _greeting(),
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              _user.fullName,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[400],
-              ),
-            ),
-          ],
-        ),
-        CircleAvatar(
-          radius: 20,
-          backgroundImage: NetworkImage(_user.profileImage),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchBar(ThemeData theme) {
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: TextField(
-        decoration: InputDecoration(
-          hintText: 'Search',
-          hintStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.5)),
-          prefixIcon: Icon(Icons.search, color: theme.colorScheme.onSurface.withOpacity(0.5)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 12),
         ),
       ),
     );
@@ -234,37 +234,78 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTodayTasksSection(ThemeData theme) {
+    final sortedTodos = [..._todayTodos];
+    sortedTodos.sort((a, b) {
+      if (a.isDone == b.isDone) return 0;
+      return a.isDone ? 1 : -1;
+    });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Tugas hari ini: ${_todayTasks.length}',
+          'Tugas hari ini: ${_todayTodos.length}',
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 180, // atur tinggi card sesuai kebutuhan
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _todayTasks.length,
-            separatorBuilder: (context, index) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final task = _todayTasks[index];
-              return SizedBox(
-                width: 220, // atur lebar card sesuai kebutuhan
-                child: _buildTaskCard(task, theme),
-              );
-            },
-          ),
+        FutureBuilder<List<_TodoProgress>>(
+          future: Future.wait(sortedTodos.map((todo) async {
+            final progress = await TodoDatabase.instance.getTodoProgress(todo.id!);
+            final isDoneFinal = progress == 1.0;
+            return _TodoProgress(todo: todo, progress: progress, isDoneFinal: isDoneFinal);
+          }).toList()),
+          builder: (context, snapshot) {
+            if (_isLoading || !snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final todoProgressList = snapshot.data!;
+            if (todoProgressList.isEmpty) {
+              return const Text('Tidak ada tugas hari ini');
+            }
+            return SizedBox(
+              height: 220,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: todoProgressList.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 12),
+                itemBuilder: (context, index) {
+                  final tp = todoProgressList[index];
+                  return SizedBox(
+                    width: 220,
+                    child: TodayTaskCard(
+                      todo: tp.todo,
+                      theme: theme,
+                      progress: tp.progress,
+                      isDoneFinal: tp.isDoneFinal,
+                      onToggle: tp.isDoneFinal
+                          ? null
+                          : () async {
+                              final updatedTodo = tp.todo.copyWith(isDone: true);
+                              await TodoDatabase.instance.updateTodo(updatedTodo);
+                              setState(() {
+                                final idx = _todayTodos.indexOf(tp.todo);
+                                if (idx != -1) _todayTodos[idx] = updatedTodo;
+                              });
+                            },
+                    ),
+                  );
+                },
+              ),
+            );
+          },
         ),
       ],
     );
   }
 
   Widget _buildUpcomingTasksSection(ThemeData theme) {
+    final sortedTodos = [..._upcomingTodos];
+    sortedTodos.sort((a, b) {
+      if (a.isDone == b.isDone) return 0;
+      return a.isDone ? 1 : -1;
+    });
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -276,138 +317,342 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _upcomingTasks.length,
-          itemBuilder: (context, index) {
-            final task = _upcomingTasks[index];
-            return _buildUpcomingTaskCard(task, theme);
+        FutureBuilder<List<_TodoProgress>>(
+          future: Future.wait(sortedTodos.map((todo) async {
+            final progress = await TodoDatabase.instance.getTodoProgress(todo.id!);
+            final isDoneFinal = progress == 1.0;
+            return _TodoProgress(todo: todo, progress: progress, isDoneFinal: isDoneFinal);
+          }).toList()),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final todoProgressList = snapshot.data!;
+            if (todoProgressList.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(child: Text('Tidak ada tugas mendatang')),
+              );
+            }
+            return Column(
+              children: List.generate(todoProgressList.length, (index) {
+                final tp = todoProgressList[index];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: UpcomingTaskCard(
+                    todo: tp.todo,
+                    theme: theme,
+                    progress: tp.progress,
+                    isDoneFinal: tp.isDoneFinal,
+                    onToggle: tp.isDoneFinal
+                        ? null
+                        : () async {
+                            final updatedTodo = tp.todo.copyWith(isDone: true);
+                            await TodoDatabase.instance.updateTodo(updatedTodo);
+                            setState(() {
+                              final idx = _upcomingTodos.indexOf(tp.todo);
+                              if (idx != -1) _upcomingTodos[idx] = updatedTodo;
+                            });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Berhasil menyelesaikan tugas!', style: TextStyle(color: Colors.white)),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          },
+                  ),
+                );
+              }),
+            );
           },
         ),
       ],
     );
   }
+}
 
-  Widget _buildTaskCard(Task task, ThemeData theme) {
-    return SizedBox(
-      height: 80, // atur tinggi card sesuai kebutuhan
-      child: Container(
-        height: 120,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.widget,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 12,
-                  backgroundColor: theme.colorScheme.primary,
-                  child: Icon(
-                    task.category == 'Akademik' ? Icons.school : Icons.fitness_center,
-                    size: 14,
-                    color: theme.colorScheme.onPrimary,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  task.category,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 48),
-            Text(
-              task.title,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            TaskProgressIndicator(progress: task.progress),
-            const SizedBox(height: 8),
-            Text(
-              '${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+// Pisahkan widget card tugas hari ini
+class TodayTaskCard extends StatelessWidget {
+  final Todo todo;
+  final ThemeData theme;
+  final double progress;
+  final bool isDoneFinal;
+  final VoidCallback? onToggle;
+  const TodayTaskCard({super.key, required this.todo, required this.theme, required this.progress, required this.isDoneFinal, this.onToggle});
 
-  Widget _buildUpcomingTaskCard(Task task, ThemeData theme) {
+  @override
+  Widget build(BuildContext context) {
+    IconData categoryIcon;
+    switch (todo.category) {
+      case 'Akademik':
+        categoryIcon = Icons.school;
+        break;
+      case 'Pekerjaan':
+        categoryIcon = Icons.work;
+        break;
+      case 'Olahraga':
+        categoryIcon = Icons.sports_soccer;
+        break;
+      case 'Hiburan':
+        categoryIcon = Icons.movie;
+        break;
+      default:
+        categoryIcon = Icons.task_alt;
+    }
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      width: 220,
+      height: 260,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.widget,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              Icons.description_outlined,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      task.title,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    if (task.isImportant)
-                      Container(
-                        margin: const EdgeInsets.only(left: 8),
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                TaskProgressIndicator(progress: task.progress),
-              ],
-            ),
+                child: Center(
+                  child: Icon(
+                    categoryIcon,
+                    size: 24,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                todo.category,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
+          const SizedBox(height: 32),
+          // Title dan toggle dalam satu row, toggle di kiri judul
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: isDoneFinal ? null : onToggle,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: todo.isDone ? AppColors.primary : Colors.transparent,
+                    border: Border.all(
+                      color: todo.isDone ? AppColors.primary : AppColors.primary,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: todo.isDone
+                      ? Icon(Icons.check, color: Colors.white, size: 22)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  todo.title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Progress bar dan label
+          Row(
+            children: [
+              Text(
+                '${(progress * 100).toInt()}%',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.white24,
+                  color: theme.colorScheme.primary,
+                  minHeight: 8,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 32),
           Text(
-            '${task.dueDate.hour}:${task.dueDate.minute.toString().padLeft(2, '0')}',
+            todo.deadline != null
+                ? '${todo.deadline!.hour}:${todo.deadline!.minute.toString().padLeft(2, '0')}'
+                : '-',
             style: TextStyle(
-              fontSize: 12,
-              color: theme.colorScheme.onSurface.withOpacity(0.5),
+              fontSize: 16,
+              color: Colors.white,
             ),
           ),
         ],
       ),
     );
   }
+}
+
+// Pisahkan widget card tugas mendatang
+class UpcomingTaskCard extends StatelessWidget {
+  final Todo todo;
+  final ThemeData theme;
+  final double progress;
+  final bool isDoneFinal;
+  final VoidCallback? onToggle;
+  const UpcomingTaskCard({super.key, required this.todo, required this.theme, required this.progress, required this.isDoneFinal, this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: TodoDatabase.instance.readNotificationsByTodoId(todo.id!),
+      builder: (context, snapshot) {
+        final hasNotif = snapshot.hasData && (snapshot.data as List).isNotEmpty;
+        return Stack(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.widget,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center, // ubah dari start ke center
+                children: [
+                  // Toggle di kiri
+                  GestureDetector(
+                    onTap: isDoneFinal ? null : onToggle,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: todo.isDone ? AppColors.primary : Colors.transparent,
+                        border: Border.all(
+                          color: todo.isDone ? AppColors.primary : AppColors.primary,
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: todo.isDone
+                          ? Icon(Icons.check, color: Colors.white, size: 22)
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Column info tugas di kanan
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Nama tugas
+                        Text(
+                          todo.title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        // Progress bar dan label
+                        Row(
+                          children: [
+                            Text(
+                              '${(progress * 100).toInt()}%',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                backgroundColor: Colors.white24,
+                                color: theme.colorScheme.primary,
+                                minHeight: 8,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Deadline
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            todo.deadline != null
+                                ? '${todo.deadline!.hour}:${todo.deadline!.minute.toString().padLeft(2, '0')}, '
+                                  '${_formatDeadline(todo.deadline!)}'
+                                : '-',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (hasNotif)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  padding: const EdgeInsets.all(6),
+                  child: Icon(
+                    Icons.notifications,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _formatDeadline(DateTime deadline) {
+    // Format: Hari, Tanggal Bulan Tahun
+    final weekDays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+    final monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    return '${weekDays[deadline.weekday % 7]}, ${deadline.day} ${monthNames[deadline.month]} ${deadline.year}';
+  }
+}
+
+// Tambahkan class helper
+class _TodoProgress {
+  final Todo todo;
+  final double progress;
+  final bool isDoneFinal;
+  _TodoProgress({required this.todo, required this.progress, required this.isDoneFinal});
 }

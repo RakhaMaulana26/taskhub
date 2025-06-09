@@ -86,6 +86,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             navigateToNavBarPage(context, idx);
           },
           onCenterButtonTap: () {
+            navigateToAddTaskPage(context);
             // TODO: Aksi untuk tombol lingkaran tengah
           },
         ),
