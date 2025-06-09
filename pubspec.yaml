@@ -30,3 +30,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icons/
+    - assets/ranks/
+    - assets/background_ranks/

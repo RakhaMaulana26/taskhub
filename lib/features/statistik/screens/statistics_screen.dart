@@ -87,18 +87,6 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: BottomNavBar(
-          currentIndex: 3,
-          onTap: (idx) {
-            navigateToNavBarPage(context, idx);
-          },
-          onCenterButtonTap: () {
-            navigateToAddTaskPage(context);
-          },
-        ),
-      ),
     );
   }
 

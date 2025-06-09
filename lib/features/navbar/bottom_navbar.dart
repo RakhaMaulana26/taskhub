@@ -4,8 +4,8 @@ import 'package:sizer/sizer.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
 import 'package:taskhub/features/home/screens/home_screen.dart';
 import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
-import 'package:taskhub/features/statistik/screens/statistics_screen.dart';
 import 'package:taskhub/features/crud/add_task.dart';
+import 'package:taskhub/features/achievements/achievement_page.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -62,8 +62,8 @@ class BottomNavBar extends StatelessWidget {
               ),
               Expanded(
                 child: _NavBarItem(
-                  svgAsset: 'assets/icons/stats-up-square.svg',
-                  label: 'Statistik',
+                  svgAsset: 'assets/icons/trophy.svg',
+                  label: 'Pencapaian',
                   selected: currentIndex == 3,
                   onTap: () => onTap(3),
                 ),
@@ -144,17 +144,17 @@ void navigateToNavBarPage(BuildContext context, int idx) {
   if (idx == 0) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => HomeScreen()),
     );
   } else if (idx == 1) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const SchedulePage()),
+      MaterialPageRoute(builder: (_) => SchedulePage()),
     );
   } else if (idx == 3) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+      MaterialPageRoute(builder: (_) => AchievementPage()),
     );
   }
 }
