@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 // import '../widgets/task_progress_chart.dart';
 // import '../widgets/period_filter.dart';
@@ -7,6 +8,10 @@ import 'package:flutter/material.dart';
 import 'package:taskhub/features/navbar/bottom_navbar.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
 import 'package:taskhub/features/taskpage/widgets/period_filter.dart';
+import 'package:flutter/material.dart';
+import 'package:taskhub/data/models/todo.dart';
+
+import '../../data/db/todo_database.dart';
 
 class TaskScreen extends StatefulWidget {
   const TaskScreen({super.key});
@@ -18,10 +23,21 @@ class TaskScreen extends StatefulWidget {
 
 class _TaskScreenState extends State<TaskScreen> {
   PeriodFilter _selectedPeriod = PeriodFilter.all;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  String _formatDeadline(DateTime deadline) {
+    return '${deadline.day}/${deadline.month}/${deadline.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final TextEditingController _searchController = TextEditingController();
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -30,9 +46,7 @@ class _TaskScreenState extends State<TaskScreen> {
         elevation: 0,
         title: const Text(
           'Tugas',
-          style: TextStyle(
-            color: Colors.white
-          ),
+          style: TextStyle(color: Colors.white),
         ),
       ),
       body: SafeArea(
@@ -52,7 +66,6 @@ class _TaskScreenState extends State<TaskScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -70,42 +83,63 @@ class _TaskScreenState extends State<TaskScreen> {
                 controller: _searchController,
                 hintText: 'Cari...',
                 leading: const Icon(Icons.search, color: Colors.grey),
-                  trailing: [
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (context, value, _) {
-                        return AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 200),
-                          child: value.text.isNotEmpty
-                              ? IconButton(
-                            key: const ValueKey('clear'),
-                            icon: const Icon(Icons.clear, color: Colors.grey),
-                            onPressed: () {
-                              _searchController.clear();
-                              FocusManager.instance.primaryFocus?.unfocus();
-                            },
-                          )
-                              : const SizedBox.shrink(key: ValueKey('empty')),
-                        );
-                      },
-                    ),
-                  ],
-                  // Functionality
-                  textStyle: MaterialStateProperty.all(
-                    const TextStyle(fontSize: 14, color: Colors.black87),
+                trailing: [
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _searchController,
+                    builder: (context, value, _) {
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: value.text.isNotEmpty
+                            ? IconButton(
+                          key: const ValueKey('clear'),
+                          icon: const Icon(Icons.clear, color: Colors.grey),
+                          onPressed: () {
+                            _searchController.clear();
+                            FocusManager.instance.primaryFocus?.unfocus();
+                          },
+                        )
+                            : const SizedBox.shrink(key: ValueKey('empty')),
+                      );
+                    },
                   ),
-                  hintStyle: MaterialStateProperty.all(
-                    TextStyle(color: Colors.grey.shade500),
-                  ),
-                  onChanged: (value) {
-                    // Add real-time search logic here if needed
-                  },
-                  onSubmitted: (query) {
-                    debugPrint('Search submitted: $query');
-                    // Add search execution logic
-                  },
+                ],
+                textStyle: MaterialStateProperty.all(
+                  const TextStyle(fontSize: 14, color: Colors.black87),
+                ),
+                hintStyle: MaterialStateProperty.all(
+                  TextStyle(color: Colors.grey.shade500),
+                ),
+                onChanged: (value) {
+                  // Add real-time search logic
+                },
+                onSubmitted: (query) {
+                  debugPrint('Search submitted: $query');
+                },
               ),
-            )
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.todos.length, // Assuming you pass todos to the screen
+                itemBuilder: (context, index) {
+                  final todo = widget.todos[index];
+                  return FutureBuilder(
+                    future: TodoDatabase.instance.readNotificationsByTodoId(todo.id!),
+                    builder: (context, snapshot) {
+                      final hasNotif = snapshot.hasData && (snapshot.data as List).isNotEmpty;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: _TaskCard(
+                          todo: todo,
+                          theme: theme,
+                          hasNotif: hasNotif,
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
@@ -118,10 +152,143 @@ class _TaskScreenState extends State<TaskScreen> {
           },
           onCenterButtonTap: () {
             navigateToAddTaskPage(context);
-            // TODO: Aksi untuk tombol lingkaran tengah
           },
         ),
-      )
+      ),
+    );
+  }
+}
+
+class _TaskCard extends StatelessWidget {
+  final Todo todo;
+  final ThemeData theme;
+  final bool hasNotif;
+
+  const _TaskCard({
+    required this.todo,
+    required this.theme,
+    required this.hasNotif,
+  });
+
+  String _formatDeadline(DateTime deadline) {
+    return '${deadline.day}/${deadline.month}/${deadline.year}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = todo.progress; // Assuming Todo has a progress property (0.0-1.0)
+
+    return Stack(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.widget,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Checkbox
+              GestureDetector(
+                onTap: () {
+                  // Handle toggle
+                },
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: todo.isDone ? AppColors.primary : Colors.transparent,
+                    border: Border.all(
+                      color: todo.isDone ? AppColors.primary : AppColors.primary,
+                      width: 2,
+                    ),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: todo.isDone
+                      ? const Icon(Icons.check, color: Colors.white, size: 22)
+                      : null,
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Task info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      todo.title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    // Progress bar
+                    Row(
+                      children: [
+                        Text(
+                          '${(progress * 100).toInt()}%',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: progress,
+                              backgroundColor: Colors.white24,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                theme.colorScheme.primary,
+                              ),
+                              minHeight: 8,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Deadline
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        todo.deadline != null
+                            ? '${todo.deadline!.hour}:${todo.deadline!.minute.toString().padLeft(2, '0')}, ${_formatDeadline(todo.deadline!)}'
+                            : '-',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: theme.colorScheme.onSurface.withOpacity(0.5),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (hasNotif)
+          Positioned(
+            top: 8,
+            right: 8,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(6),
+              child: const Icon(
+                Icons.notifications,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
