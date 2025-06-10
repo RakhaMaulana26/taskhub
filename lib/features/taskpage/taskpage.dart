@@ -173,10 +173,14 @@ class _TaskScreenState extends State<TaskScreen> {
                       final hasNotif = snapshot.hasData && (snapshot.data as List).isNotEmpty;
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: _TaskCard(
-                          todo: todo,
-                          theme: theme,
-                          hasNotif: hasNotif,
+                        child: InkWell(
+                          onTap: () => _showTodoDetailPopup(context, todo),
+                          borderRadius: BorderRadius.circular(12),
+                          child: _TaskCard(
+                            todo: todo,
+                            theme: theme,
+                            hasNotif: hasNotif,
+                          ),
                         ),
                       );
                     },
@@ -198,6 +202,174 @@ class _TaskScreenState extends State<TaskScreen> {
             navigateToAddTaskPage(context);
           },
         ),
+      ),
+    );
+  }
+
+  void _showTodoDetailPopup(BuildContext context, Todo todo) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      todo.title,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Detail Todo
+                _buildDetailRow(Icons.description, "Deskripsi:", todo.description ?? "-"),
+                _buildDetailRow(Icons.calendar_today, "Deadline:",
+                    todo.deadline != null
+                        ? '${_formatDeadline(todo.deadline!)} ${todo.deadline!.hour}:${todo.deadline!.minute.toString().padLeft(2, '0')}'
+                        : "-"),
+                _buildDetailRow(Icons.label, "Kategori:", todo.category ?? "-"),
+
+                const SizedBox(height: 20),
+                if (todo.description != null && todo.description!.isNotEmpty)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Deskripsi Lengkap:",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(todo.description!),
+                    ],
+                  ),
+
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => _confirmDeleteTodo(context, todo),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.widget,
+                          side: BorderSide(color: AppColors.widget),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.delete, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text("Hapus", style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text("Tutup"),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteTodo(BuildContext context, Todo todo) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Konfirmasi Hapus"),
+          content: const Text("Apakah Anda yakin ingin menghapus tugas ini?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Batal"),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Tutup dialog konfirmasi
+                Navigator.pop(context); // Tutup dialog detail
+                _deleteTodo(todo); // Eksekusi penghapusan
+              },
+              child: const Text("Hapus", style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteTodo(Todo todo) async {
+    try {
+      await TodoDatabase.instance.deleteTodo(todo.id!);
+      setState(() {
+        _todayTodos.removeWhere((item) => item.id == todo.id);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Tugas berhasil dihapus")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal menghapus tugas: ${e.toString()}")),
+      );
+    }
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(value),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
