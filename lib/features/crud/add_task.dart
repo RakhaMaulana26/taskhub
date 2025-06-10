@@ -6,6 +6,7 @@ import 'package:taskhub/data/models/notification.dart';
 import 'package:taskhub/data/db/todo_database.dart';
 import 'package:taskhub/config/theme/app_theme.dart'; // Pastikan Anda mengimpor AppColors
 import 'package:taskhub/features/jadwal/screens/schedule_page.dart';
+import 'package:taskhub/features/notification/notification_service.dart';
 
 class TodoFormPage extends StatefulWidget {
   const TodoFormPage({Key? key}) : super(key: key);
@@ -101,6 +102,8 @@ class _TodoFormPageState extends State<TodoFormPage> {
       if (createdNotifs.isNotEmpty) {
         for (final n in createdNotifs) {
           debugPrint('NOTIF CREATED: id=${n.id}, todoId=${n.todoId}, scheduledTime=${n.scheduledTime}, isSent=${n.isSent}');
+          // Jadwalkan notifikasi lokal langsung setelah berhasil dibuat
+          await NotificationService.scheduleNotification(n, todo.title);
         }
       }
       if (!mounted) return;
