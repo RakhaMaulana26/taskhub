@@ -8,22 +8,30 @@ import 'package:flutter/material.dart';
 import 'package:taskhub/features/navbar/bottom_navbar.dart';
 import 'package:taskhub/config/theme/app_theme.dart';
 import 'package:taskhub/features/taskpage/widgets/period_filter.dart';
-import 'package:flutter/material.dart';
 import 'package:taskhub/data/models/todo.dart';
 
 import '../../data/db/todo_database.dart';
 
 class TaskScreen extends StatefulWidget {
+  // final List<Todo> todos;
+
   const TaskScreen({super.key});
 
   @override
   State<TaskScreen> createState() => _TaskScreenState();
-
 }
 
 class _TaskScreenState extends State<TaskScreen> {
   PeriodFilter _selectedPeriod = PeriodFilter.all;
   final TextEditingController _searchController = TextEditingController();
+  List<Todo> _todayTodos = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTodosBasedOnFilter(_selectedPeriod);
+  }
 
   @override
   void dispose() {
@@ -33,6 +41,32 @@ class _TaskScreenState extends State<TaskScreen> {
 
   String _formatDeadline(DateTime deadline) {
     return '${deadline.day}/${deadline.month}/${deadline.year}';
+  }
+
+  Future<void> _fetchTodosBasedOnFilter(PeriodFilter filter) async {
+    setState(() => _isLoading = true);
+    final allTodos = await TodoDatabase.instance.readAllTodos();
+    final now = DateTime.now();
+
+    List<Todo> filteredTodos = allTodos.where((todo) {
+      switch (filter) {
+        case PeriodFilter.all:
+          return true;
+        case PeriodFilter.notDone:
+          return !todo.isDone;
+        case PeriodFilter.done:
+          return todo.isDone;
+        case PeriodFilter.late:
+          if (todo.isDone) return false;
+          if (todo.deadline == null) return false;
+          return todo.deadline!.isBefore(now);
+      }
+    }).toList();
+
+    setState(() {
+      _todayTodos = filteredTodos;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -59,9 +93,8 @@ class _TaskScreenState extends State<TaskScreen> {
                 child: PeriodFilterWidget(
                   selectedFilter: _selectedPeriod,
                   onFilterChanged: (filter) {
-                    setState(() {
-                      _selectedPeriod = filter;
-                    });
+                    setState(() => _selectedPeriod = filter);
+                    _fetchTodosBasedOnFilter(filter);
                   },
                 ),
               ),
@@ -84,24 +117,24 @@ class _TaskScreenState extends State<TaskScreen> {
                 hintText: 'Cari...',
                 leading: const Icon(Icons.search, color: Colors.grey),
                 trailing: [
-                  ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _searchController,
-                    builder: (context, value, _) {
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: value.text.isNotEmpty
-                            ? IconButton(
-                          key: const ValueKey('clear'),
-                          icon: const Icon(Icons.clear, color: Colors.grey),
-                          onPressed: () {
-                            _searchController.clear();
-                            FocusManager.instance.primaryFocus?.unfocus();
-                          },
-                        )
-                            : const SizedBox.shrink(key: ValueKey('empty')),
-                      );
-                    },
-                  ),
+                ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, _) {
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: value.text.isNotEmpty
+                        ? IconButton(
+                      key: const ValueKey('clear'),
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: () {
+                        _searchController.clear();
+                        FocusManager.instance.primaryFocus?.unfocus();
+                      },
+                    )
+                        : const SizedBox.shrink(key: ValueKey('empty')),
+                  );
+                },
+              ),
                 ],
                 textStyle: MaterialStateProperty.all(
                   const TextStyle(fontSize: 14, color: Colors.black87),
@@ -110,7 +143,7 @@ class _TaskScreenState extends State<TaskScreen> {
                   TextStyle(color: Colors.grey.shade500),
                 ),
                 onChanged: (value) {
-                  // Add real-time search logic
+                  // Implement search functionality if needed
                 },
                 onSubmitted: (query) {
                   debugPrint('Search submitted: $query');
@@ -119,10 +152,21 @@ class _TaskScreenState extends State<TaskScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                itemCount: widget.todos.length, // Assuming you pass todos to the screen
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _todayTodos.isEmpty
+                  ? Center(
+                child: Text(
+                  'Tidak ada tugas',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  ),
+                ),
+              )
+                  : ListView.builder(
+                itemCount: _todayTodos.length,
                 itemBuilder: (context, index) {
-                  final todo = widget.todos[index];
+                  final todo = _todayTodos[index];
                   return FutureBuilder(
                     future: TodoDatabase.instance.readNotificationsByTodoId(todo.id!),
                     builder: (context, snapshot) {
@@ -176,7 +220,7 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = todo.progress; // Assuming Todo has a progress property (0.0-1.0)
+    final progress =  0.0; // Nilai default jika progress null
 
     return Stack(
       children: [
